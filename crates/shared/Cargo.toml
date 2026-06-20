@@ -1,0 +1,6 @@
+[package]
+name = "chair-shared"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

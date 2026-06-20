@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
+  <title id="title">Left and right drive node layout</title>
+  <desc id="desc">Two drive Brains, each planned to control four motors on one side and accept voltage, brake, disable, and status messages.</desc>
+  <defs>
+    <style>
+      .bg { fill: #050505; }
+      .line { fill: none; stroke: #d8d8d0; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #d8d8d0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { fill: none; stroke: #ff7479; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .green { fill: none; stroke: #40d681; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .text { fill: #ff7479; font: 700 30px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .small { fill: #d8d8d0; font: 700 20px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .tiny { fill: #d8d8d0; font: 700 16px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+    </style>
+  </defs>
+  <rect class="bg" width="1100" height="560"/>
+
+  <!-- Left node brain -->
+  <path class="line" d="M91 119 L337 119 L414 164 L414 345 L121 345 L64 307 L64 154 Z"/>
+  <path class="thin" d="M91 119 L121 154 L414 164 M121 154 L121 345"/>
+  <text class="text" x="148" y="201">Left Drive Brain</text>
+  <text class="small" x="150" y="238">slot 2 / chair-left</text>
+  <text class="small" x="150" y="274">program placeholder today</text>
+
+  <!-- Right node brain -->
+  <path class="line" d="M686 119 L932 119 L1009 164 L1009 345 L716 345 L659 307 L659 154 Z"/>
+  <path class="thin" d="M686 119 L716 154 L1009 164 M716 154 L716 345"/>
+  <text class="text" x="740" y="201">Right Drive Brain</text>
+  <text class="small" x="742" y="238">slot 3 / chair-right</text>
+  <text class="small" x="742" y="274">program placeholder today</text>
+
+  <!-- Left motors -->
+  <g transform="translate(119 414)">
+    <circle class="line" cx="0" cy="0" r="31"/><circle class="line" cx="92" cy="0" r="31"/>
+    <circle class="line" cx="184" cy="0" r="31"/><circle class="line" cx="276" cy="0" r="31"/>
+    <path class="thin" d="M0 -31 L0 -66 M92 -31 L92 -66 M184 -31 L184 -66 M276 -31 L276 -66"/>
+    <text class="small" x="24" y="70">four left-side motors</text>
+  </g>
+
+  <!-- Right motors -->
+  <g transform="translate(714 414)">
+    <circle class="line" cx="0" cy="0" r="31"/><circle class="line" cx="92" cy="0" r="31"/>
+    <circle class="line" cx="184" cy="0" r="31"/><circle class="line" cx="276" cy="0" r="31"/>
+    <path class="thin" d="M0 -31 L0 -66 M92 -31 L92 -66 M184 -31 L184 -66 M276 -31 L276 -66"/>
+    <text class="small" x="18" y="70">four right-side motors</text>
+  </g>
+
+  <!-- Commands from controller -->
+  <path class="green" d="M515 154 C468 147 440 148 414 164"/>
+  <path class="green" d="M586 154 C622 147 642 148 659 164"/>
+  <path class="accent" d="M455 143 L414 164 L458 176"/>
+  <path class="accent" d="M623 142 L659 164 L621 178"/>
+  <text class="text" x="467" y="103">Controller commands</text>
+  <text class="tiny" x="458" y="207">voltage</text>
+  <text class="tiny" x="458" y="232">brake mode</text>
+  <text class="tiny" x="458" y="257">disable</text>
+  <text class="tiny" x="458" y="282">status back</text>
+  <rect class="accent" x="440" y="182" width="205" height="122" rx="5"/>
+
+  <!-- Safety note -->
+  <path class="accent" d="M536 332 C492 356 487 398 522 425 C558 453 612 438 624 395 C633 360 589 324 536 332 Z"/>
+  <text class="text" x="517" y="391">E-stop</text>
+  <text class="small" x="392" y="514">any node fault should force both drive sides safe</text>
+</svg>

@@ -1,0 +1,15 @@
+[package]
+name = "chair-right"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+chair-shared = { workspace = true }
+vexide = { workspace = true }
+
+# These fields configure default behavior for uploads with `cargo v5`.
+[package.metadata.v5]
+upload-strategy = "differential"
+slot = 3
+icon = "cool-x"
+compress = true

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
+  <title id="title">Three VEX V5 Brain system topology</title>
+  <desc id="desc">Controller Brain connected to planned left and right drive Brains, with steering, ADI controls, HUD, and drive motors shown.</desc>
+  <defs>
+    <style>
+      .bg { fill: #050505; }
+      .line { fill: none; stroke: #d8d8d0; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #d8d8d0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { fill: none; stroke: #ff7479; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .green { fill: none; stroke: #40d681; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .text { fill: #ff7479; font: 700 28px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .small { fill: #d8d8d0; font: 700 20px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .tiny { fill: #d8d8d0; font: 700 16px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+    </style>
+  </defs>
+  <rect class="bg" width="1100" height="560"/>
+
+  <!-- Controller brain -->
+  <path class="line" d="M76 121 C86 82 112 62 158 60 L434 61 C486 62 514 92 516 139 L516 421 C513 468 482 497 433 499 L151 498 C104 496 72 467 68 422 L68 141 C69 134 71 126 76 121 Z"/>
+  <path class="thin" d="M129 152 C139 128 158 118 192 118 L389 119 C425 119 445 137 449 171 L449 385 C445 419 423 438 388 441 L188 440 C151 437 130 420 126 386 L126 168"/>
+  <text class="text" x="151" y="210">Controller Brain</text>
+  <text class="small" x="158" y="246">slot 1 / chair-controller</text>
+  <text class="small" x="158" y="284">port 1 steering motor</text>
+  <text class="small" x="158" y="320">ADI A-E driver inputs</text>
+  <text class="small" x="158" y="356">display HUD + safety logic</text>
+  <rect class="accent" x="145" y="182" width="286" height="192" rx="4"/>
+
+  <!-- V5 smart/ADI ports on controller -->
+  <g>
+    <rect class="thin" x="116" y="80" width="30" height="30" rx="5"/><rect class="thin" x="168" y="80" width="30" height="30" rx="5"/>
+    <rect class="thin" x="220" y="80" width="30" height="30" rx="5"/><rect class="thin" x="272" y="80" width="30" height="30" rx="5"/>
+    <rect class="thin" x="324" y="80" width="30" height="30" rx="5"/><rect class="thin" x="376" y="80" width="30" height="30" rx="5"/>
+    <rect class="thin" x="116" y="450" width="30" height="30" rx="5"/><rect class="thin" x="168" y="450" width="30" height="30" rx="5"/>
+    <rect class="thin" x="220" y="450" width="30" height="30" rx="5"/><rect class="thin" x="272" y="450" width="30" height="30" rx="5"/>
+    <rect class="thin" x="324" y="450" width="30" height="30" rx="5"/><rect class="thin" x="376" y="450" width="30" height="30" rx="5"/>
+  </g>
+
+  <!-- Left node -->
+  <path class="line" d="M724 70 L927 70 L991 107 L991 243 L749 243 L697 209 L697 100 Z"/>
+  <path class="thin" d="M724 70 L749 100 L991 107 M749 100 L749 243"/>
+  <text class="text" x="756" y="135">Left Brain</text>
+  <text class="small" x="757" y="170">slot 2</text>
+  <text class="small" x="757" y="202">4 left motors</text>
+  <g transform="translate(942 132)">
+    <circle class="thin" cx="0" cy="0" r="13"/><circle class="thin" cx="35" cy="0" r="13"/>
+    <circle class="thin" cx="0" cy="44" r="13"/><circle class="thin" cx="35" cy="44" r="13"/>
+  </g>
+
+  <!-- Right node -->
+  <path class="line" d="M724 318 L927 318 L991 355 L991 491 L749 491 L697 457 L697 348 Z"/>
+  <path class="thin" d="M724 318 L749 348 L991 355 M749 348 L749 491"/>
+  <text class="text" x="756" y="383">Right Brain</text>
+  <text class="small" x="757" y="418">slot 3</text>
+  <text class="small" x="757" y="450">4 right motors</text>
+  <g transform="translate(942 380)">
+    <circle class="thin" cx="0" cy="0" r="13"/><circle class="thin" cx="35" cy="0" r="13"/>
+    <circle class="thin" cx="0" cy="44" r="13"/><circle class="thin" cx="35" cy="44" r="13"/>
+  </g>
+
+  <!-- Planned command links -->
+  <path class="green" d="M519 213 C577 179 633 154 692 140"/>
+  <path class="green" d="M519 347 C580 378 635 404 692 420"/>
+  <path class="accent" d="M658 128 L693 139 L664 160"/>
+  <path class="accent" d="M661 440 L693 421 L659 405"/>
+  <text class="tiny" x="552" y="177">planned port 5 link</text>
+  <text class="tiny" x="548" y="405">planned port 10 link</text>
+
+  <!-- Steering wheel callout -->
+  <path class="line" d="M32 289 C64 289 68 257 100 257 L126 257"/>
+  <circle class="accent" cx="36" cy="289" r="19"/>
+  <path class="accent" d="M24 289 L48 289 M36 277 L36 301"/>
+  <text class="tiny" x="32" y="331">steering motor</text>
+</svg>
