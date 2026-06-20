@@ -1,20 +1,21 @@
-[package]
-name = "vexide-template"
+[workspace]
+resolver = "2"
+members = [
+    "crates/controller",
+    "crates/left",
+    "crates/right",
+    "crates/shared",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+
+[workspace.dependencies]
+chair-shared = { path = "crates/shared" }
+vexide = { version = "0.8.0", features = ["full", "default-sdk"] }
+thiserror = { version = "2.0.18" }
 
 [profile.release]
 opt-level = "z"
 lto = "fat"
-
-# These fields configure default behavior for uploads with `cargo v5`.
-[package.metadata.v5]
-upload-strategy = "differential"
-slot = 1
-icon = "cool-x"
-compress = true
-
-[dependencies]
-vexide = { version = "0.8.0", features = ["full", "default-sdk"] }
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
+  <title id="title">Controller Brain port map</title>
+  <desc id="desc">Controller Brain with smart port 1 steering motor, planned ADI inputs A through E, and planned left and right node links on ports 5 and 10.</desc>
+  <defs>
+    <style>
+      .bg { fill: #050505; }
+      .line { fill: none; stroke: #d8d8d0; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .thin { fill: none; stroke: #d8d8d0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { fill: none; stroke: #ff7479; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .green { fill: none; stroke: #40d681; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .text { fill: #ff7479; font: 700 30px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .small { fill: #d8d8d0; font: 700 19px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+      .tiny { fill: #d8d8d0; font: 700 15px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
+    </style>
+  </defs>
+  <rect class="bg" width="1100" height="560"/>
+
+  <path class="line" d="M79 64 C91 33 116 21 160 20 L718 20 C769 22 800 51 804 99 L804 459 C801 508 766 536 715 538 L154 536 C104 534 73 505 70 458 L70 99 C71 86 74 74 79 64 Z"/>
+  <path class="thin" d="M140 136 C148 103 173 90 218 90 L594 91 C641 92 669 118 675 160 L675 392 C669 433 640 458 595 460 L219 458 C173 455 147 432 140 392 Z"/>
+  <rect class="accent" x="196" y="174" width="405" height="176" rx="4"/>
+  <text class="text" x="224" y="230">HUD</text>
+  <text class="small" x="224" y="270">Steer: -1.00 .. 1.00</text>
+  <text class="small" x="224" y="306">lock / ignition planned</text>
+
+  <!-- Smart ports -->
+  <g>
+    <rect class="thin" x="126" y="40" width="34" height="34" rx="5"/><text class="tiny" x="136" y="63">1</text>
+    <rect class="thin" x="184" y="40" width="34" height="34" rx="5"/><text class="tiny" x="194" y="63">2</text>
+    <rect class="thin" x="242" y="40" width="34" height="34" rx="5"/><text class="tiny" x="252" y="63">3</text>
+    <rect class="thin" x="300" y="40" width="34" height="34" rx="5"/><text class="tiny" x="310" y="63">4</text>
+    <rect class="thin" x="358" y="40" width="34" height="34" rx="5"/><text class="tiny" x="368" y="63">5</text>
+    <rect class="thin" x="416" y="40" width="34" height="34" rx="5"/><text class="tiny" x="426" y="63">6</text>
+    <rect class="thin" x="474" y="40" width="34" height="34" rx="5"/><text class="tiny" x="484" y="63">7</text>
+    <rect class="thin" x="532" y="40" width="34" height="34" rx="5"/><text class="tiny" x="542" y="63">8</text>
+    <rect class="thin" x="590" y="40" width="34" height="34" rx="5"/><text class="tiny" x="600" y="63">9</text>
+    <rect class="thin" x="648" y="40" width="34" height="34" rx="5"/><text class="tiny" x="653" y="63">10</text>
+  </g>
+
+  <!-- ADI ports -->
+  <g>
+    <rect class="thin" x="126" y="486" width="34" height="34" rx="5"/><text class="tiny" x="136" y="509">A</text>
+    <rect class="thin" x="184" y="486" width="34" height="34" rx="5"/><text class="tiny" x="194" y="509">B</text>
+    <rect class="thin" x="242" y="486" width="34" height="34" rx="5"/><text class="tiny" x="252" y="509">C</text>
+    <rect class="thin" x="300" y="486" width="34" height="34" rx="5"/><text class="tiny" x="310" y="509">D</text>
+    <rect class="thin" x="358" y="486" width="34" height="34" rx="5"/><text class="tiny" x="368" y="509">E</text>
+  </g>
+
+  <!-- Port 1 steering motor -->
+  <path class="green" d="M143 40 C103 18 55 42 45 83 C34 130 80 158 123 139"/>
+  <circle class="accent" cx="48" cy="91" r="26"/>
+  <path class="accent" d="M33 91 L63 91 M48 76 L48 106"/>
+  <text class="small" x="25" y="178">port 1</text>
+  <text class="small" x="23" y="204">steering motor</text>
+
+  <!-- Planned links -->
+  <path class="green" d="M376 39 C493 -5 649 -6 803 83"/>
+  <path class="green" d="M666 40 C805 70 895 117 958 183"/>
+  <text class="small" x="823" y="93">port 5: left link</text>
+  <text class="small" x="837" y="128">port 10: right link</text>
+
+  <!-- ADI callouts -->
+  <path class="accent" d="M143 522 C129 542 104 547 78 535"/>
+  <path class="accent" d="M201 522 C184 555 133 561 86 542"/>
+  <path class="accent" d="M259 522 C279 556 348 559 392 535"/>
+  <path class="accent" d="M317 522 C384 552 508 548 578 508"/>
+  <path class="accent" d="M375 522 C501 570 711 533 795 453"/>
+  <text class="small" x="49" y="477">A+B ignition</text>
+  <text class="small" x="399" y="536">C E-stop</text>
+  <text class="small" x="601" y="508">D speed knob</text>
+  <text class="small" x="812" y="453">E drift knob</text>
+</svg>

@@ -1,0 +1,51 @@
+:root {
+  --chair-bg: #050505;
+  --chair-paper: #0b0b0b;
+  --chair-line: #d8d8d0;
+  --chair-muted: #9d9d96;
+  --chair-accent: #ff7479;
+  --chair-green: #40d681;
+}
+
+html.coal,
+html.navy,
+html.ayu {
+  --bg: var(--chair-bg);
+  --sidebar-bg: #090909;
+  --sidebar-fg: #d8d8d0;
+  --sidebar-active: var(--chair-accent);
+  --links: #79c7ff;
+  --inline-code-color: #ffd7d9;
+  --table-border-color: #474743;
+}
+
+.content main {
+  line-height: 1.6;
+}
+
+.content h1,
+.content h2,
+.content h3 {
+  letter-spacing: 0;
+}
+
+.content img[src*="diagrams/"] {
+  display: block;
+  width: min(100%, 980px);
+  margin: 1.25rem auto 1.75rem;
+  border: 1px solid #3b3b37;
+  border-radius: 8px;
+  background: var(--chair-paper);
+}
+
+.content table {
+  font-size: 0.95em;
+}
+
+.content code {
+  border-radius: 4px;
+}
+
+.content blockquote {
+  border-left-color: var(--chair-accent);
+}

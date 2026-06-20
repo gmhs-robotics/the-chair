@@ -1,0 +1,12 @@
+[book]
+authors = ["The Chair team"]
+language = "en"
+src = "."
+title = "The Chair Hardware"
+
+[build]
+build-dir = "../target/docs-book"
+
+[output.html]
+additional-css = ["theme/chair.css"]
+preferred-dark-theme = "coal"
