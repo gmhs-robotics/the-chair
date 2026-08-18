@@ -1,43 +1,27 @@
 name: Rust
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
-    check:
-        name: Check
-        runs-on: ubuntu-latest
-        steps:
-            - name: Setup | Checkout
-              uses: actions/checkout@v2
-
-            - name: Setup | Toolchain
-              uses: dtolnay/rust-toolchain@master
-              with:
-                  profile: minimal
-                  toolchain: nightly
-                  components: rust-src
-
-            - name: Check
-              uses: actions-rs/cargo@v1
-              with:
-                  command: check
-                  args: --target=armv7a-vex-v5 -Zbuild-std=std,panic_abort -Zbuild-std-features=compiler-builtins-mem
-
-    test:
-        name: Test
-        runs-on: ubuntu-latest
-        steps:
-            - name: Setup | Checkout
-              uses: actions/checkout@v2
-
-            - name: Setup | Toolchain
-              uses: dtolnay/rust-toolchain@master
-              with:
-                  profile: minimal
-                  toolchain: nightly
-                  components: rust-src
-
-            - name: Check
-              uses: actions-rs/cargo@v1
-              with:
-                  command: test
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          # Keep this aligned with rust-toolchain.toml; newer VaList APIs break vex-sdk-mock 0.1.0.
+          toolchain: nightly-2025-11-26
+          components: rust-src,rustfmt,clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run host tests
+        run: cargo test --workspace
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Check VEX target
+        run: cargo check --workspace --target=armv7a-vex-v5 -Zbuild-std=std,panic_abort -Zbuild-std-features=compiler-builtins-mem

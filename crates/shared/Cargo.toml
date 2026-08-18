@@ -4,3 +4,9 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+vexide = { workspace = true }
+serde = { workspace = true }
+postcard = { workspace = true }
+cobs = { workspace = true }
+thiserror = { workspace = true }
+crc = "3.4.0"

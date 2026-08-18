@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
   <title id="title">Left and right drive node layout</title>
-  <desc id="desc">Two drive Brains, each planned to control four motors on one side and accept voltage, brake, disable, and status messages.</desc>
+  <desc id="desc">Two drive Brains, each controlling four motors on one side and exchanging voltage, health, speed, and emergency-stop messages.</desc>
   <defs>
     <style>
       .bg { fill: #050505; }
@@ -20,14 +20,14 @@
   <path class="thin" d="M91 119 L121 154 L414 164 M121 154 L121 345"/>
   <text class="text" x="148" y="201">Left Drive Brain</text>
   <text class="small" x="150" y="238">slot 2 / chair-left</text>
-  <text class="small" x="150" y="274">program placeholder today</text>
+  <text class="small" x="150" y="274">smart ports 3–6</text>
 
   <!-- Right node brain -->
   <path class="line" d="M686 119 L932 119 L1009 164 L1009 345 L716 345 L659 307 L659 154 Z"/>
   <path class="thin" d="M686 119 L716 154 L1009 164 M716 154 L716 345"/>
   <text class="text" x="740" y="201">Right Drive Brain</text>
   <text class="small" x="742" y="238">slot 3 / chair-right</text>
-  <text class="small" x="742" y="274">program placeholder today</text>
+  <text class="small" x="742" y="274">smart ports 3–6</text>
 
   <!-- Left motors -->
   <g transform="translate(119 414)">
@@ -52,9 +52,9 @@
   <path class="accent" d="M623 142 L659 164 L621 178"/>
   <text class="text" x="467" y="103">Controller commands</text>
   <text class="tiny" x="458" y="207">voltage</text>
-  <text class="tiny" x="458" y="232">brake mode</text>
-  <text class="tiny" x="458" y="257">disable</text>
-  <text class="tiny" x="458" y="282">status back</text>
+  <text class="tiny" x="458" y="232">health + RPM</text>
+  <text class="tiny" x="458" y="257">E-stop</text>
+  <text class="tiny" x="458" y="282">CRC + timeout</text>
   <rect class="accent" x="440" y="182" width="205" height="122" rx="5"/>
 
   <!-- Safety note -->
