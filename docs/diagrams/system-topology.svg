@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
   <title id="title">Three VEX V5 Brain system topology</title>
-  <desc id="desc">Controller Brain connected to planned left and right drive Brains, with steering, ADI controls, HUD, and drive motors shown.</desc>
+  <desc id="desc">Controller Brain connected to left and right drive Brains, with steering, ADI controls, HUD, and drive motors shown.</desc>
   <defs>
     <style>
       .bg { fill: #050505; }
@@ -21,7 +21,7 @@
   <text class="text" x="151" y="210">Controller Brain</text>
   <text class="small" x="158" y="246">slot 1 / chair-controller</text>
   <text class="small" x="158" y="284">port 1 steering motor</text>
-  <text class="small" x="158" y="320">ADI A-E driver inputs</text>
+  <text class="small" x="158" y="320">ADI A-B throttle inputs</text>
   <text class="small" x="158" y="356">display HUD + safety logic</text>
   <rect class="accent" x="145" y="182" width="286" height="192" rx="4"/>
 
@@ -57,13 +57,13 @@
     <circle class="thin" cx="0" cy="44" r="13"/><circle class="thin" cx="35" cy="44" r="13"/>
   </g>
 
-  <!-- Planned command links -->
+  <!-- Command links -->
   <path class="green" d="M519 213 C577 179 633 154 692 140"/>
   <path class="green" d="M519 347 C580 378 635 404 692 420"/>
   <path class="accent" d="M658 128 L693 139 L664 160"/>
   <path class="accent" d="M661 440 L693 421 L659 405"/>
-  <text class="tiny" x="552" y="177">planned port 5 link</text>
-  <text class="tiny" x="548" y="405">planned port 10 link</text>
+  <text class="tiny" x="552" y="177">smart port 2: left</text>
+  <text class="tiny" x="548" y="405">smart port 3: right</text>
 
   <!-- Steering wheel callout -->
   <path class="line" d="M32 289 C64 289 68 257 100 257 L126 257"/>

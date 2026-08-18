@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
   <title id="title">Controller Brain port map</title>
-  <desc id="desc">Controller Brain with smart port 1 steering motor, planned ADI inputs A through E, and planned left and right node links on ports 5 and 10.</desc>
+  <desc id="desc">Controller Brain with smart port 1 steering motor, throttle inputs on ADI A and B, and left and right node links on ports 2 and 3.</desc>
   <defs>
     <style>
       .bg { fill: #050505; }
@@ -20,7 +20,7 @@
   <rect class="accent" x="196" y="174" width="405" height="176" rx="4"/>
   <text class="text" x="224" y="230">HUD</text>
   <text class="small" x="224" y="270">Steer: -1.00 .. 1.00</text>
-  <text class="small" x="224" y="306">lock / ignition planned</text>
+  <text class="small" x="224" y="306">node health + speed</text>
 
   <!-- Smart ports -->
   <g>
@@ -52,20 +52,15 @@
   <text class="small" x="25" y="178">port 1</text>
   <text class="small" x="23" y="204">steering motor</text>
 
-  <!-- Planned links -->
-  <path class="green" d="M376 39 C493 -5 649 -6 803 83"/>
-  <path class="green" d="M666 40 C805 70 895 117 958 183"/>
-  <text class="small" x="823" y="93">port 5: left link</text>
-  <text class="small" x="837" y="128">port 10: right link</text>
+  <!-- Node links -->
+  <path class="green" d="M201 39 C493 -5 649 -6 803 83"/>
+  <path class="green" d="M259 40 C805 70 895 117 958 183"/>
+  <text class="small" x="823" y="93">port 2: left link</text>
+  <text class="small" x="837" y="128">port 3: right link</text>
 
   <!-- ADI callouts -->
   <path class="accent" d="M143 522 C129 542 104 547 78 535"/>
   <path class="accent" d="M201 522 C184 555 133 561 86 542"/>
-  <path class="accent" d="M259 522 C279 556 348 559 392 535"/>
-  <path class="accent" d="M317 522 C384 552 508 548 578 508"/>
-  <path class="accent" d="M375 522 C501 570 711 533 795 453"/>
   <text class="small" x="49" y="477">A+B ignition</text>
-  <text class="small" x="399" y="536">C E-stop</text>
-  <text class="small" x="601" y="508">D speed knob</text>
-  <text class="small" x="812" y="453">E drift knob</text>
+  <text class="small" x="399" y="536">other ADI unused</text>
 </svg>

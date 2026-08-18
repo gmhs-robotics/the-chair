@@ -210,6 +210,12 @@ pub struct SteeringWheel {
 }
 
 impl SteeringWheel {
+    /// Lock motor and stop applying any voltage. May be restarted by calling [update]
+    pub fn stop(&mut self) -> Result<(), PortError> {
+        self.motor.set_voltage(0.0)?;
+        self.motor.brake(BrakeMode::Brake)
+    }
+
     pub fn new(
         port: SmartPort,
         gearset: Gearset,
