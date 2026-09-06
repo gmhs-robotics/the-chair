@@ -292,12 +292,10 @@ fn normalized_steering(angle: f64) -> f64 {
     if angle.abs() <= STEERING_DEADZONE_DEG {
         0.0
     } else {
-        // Square-root response gives substantially more differential steering near center while
-        // retaining the measured ±70 degree endpoints.
+        // Linear response keeps steering gentle near center and reaches full travel at ±80°.
         angle.signum()
             * (((angle.abs() - STEERING_DEADZONE_DEG) / (MAX_STEERING_DEG - STEERING_DEADZONE_DEG))
                 .clamp(0.0, 1.0))
-            .sqrt()
     }
 }
 
@@ -326,11 +324,11 @@ mod tests {
     }
 
     #[test]
-    fn steering_input_is_sensitive_near_center_and_clamped_at_travel() {
+    fn steering_input_has_wide_deadzone_linear_response_and_clamped_travel() {
         assert_eq!(normalized_steering(STEERING_DEADZONE_DEG), 0.0);
-        assert!(normalized_steering(10.0) > 0.20);
-        assert!(normalized_steering(-10.0) < -0.20);
-        assert_eq!(normalized_steering(70.0), 1.0);
+        assert_eq!(normalized_steering(15.0), 5.0 / 70.0);
+        assert_eq!(normalized_steering(-15.0), -5.0 / 70.0);
+        assert_eq!(normalized_steering(80.0), 1.0);
         assert_eq!(normalized_steering(1000.0), 1.0);
     }
 

@@ -107,14 +107,14 @@ def node():
 
 def signals():
     d=Diagram("06","From rider input to motor voltage","Control flow, not electrical wiring. Positive steering requests a right turn.",1080)
-    d.card(40,165,520,170,"WHEEL INPUT","P17 throttle + physical wheel",["Rotation Sensor: signed direction; ADI A: enable.","P21 encoder: measured steering position.","ADI B: latched E-stop in either mode."])
-    d.card(640,165,520,170,"CONTROLLER INPUT","Radio on master P18",["Left Y up: throttle; right X: steering.","A: arm + enable; R1: enable; L1: brake.","B: E-stop; X: mode; no automatic fallback."])
+    d.card(40,165,520,170,"WHEEL INPUT","P17 throttle + physical wheel",["Rotation Sensor: signed 10% steps; ADI A: enable.","P21 encoder: 10° deadzone; full at ±80°.","ADI B: latched E-stop in either mode."])
+    d.card(640,165,520,170,"CONTROLLER INPUT","Radio on master P18",["Left Y up: throttle; right X: steering.","A: arm once; sticks drive; L1: coast.","B: E-stop; X: mode; no automatic fallback."])
     d.line("300,335 300,375 600,375 600,415",arrow=True)
     d.line("900,335 900,375 600,375")
     d.card(230,415,740,170,"MASTER / control.rs","Select mode and enforce arming",["Healthy + stopped + cool + centered; neutral for 500 ms.","Only the selected mode supplies throttle and steering.","Rider stops and connected-controller B / L1 remain active."])
     d.line("600,585 600,605 307,605 307,625",arrow=True)
-    d.card(40,625,535,180,"MASTER / MIX + SPEED CONTROL","Signed LEFT / RIGHT targets",["throttle × (1 + steer), throttle × (1 − steer)","Desaturate; each target magnitude ≤45 RPM.","Feed-forward + RPM error; ramp and cap at ±4 V."],GREEN)
-    d.card(625,625,535,180,"CHILD / LOCAL SUPERVISION","Validate, ramp, drive P4–P7",["Receive voltage, not RPM, over the Smart Cable.","Check lease, health, duty; own ±4 V ramp.","Zero commands request immediate Brake."],GREEN)
+    d.card(40,625,535,180,"MASTER / MIX + SPEED CONTROL","Signed LEFT / RIGHT targets",["WHEEL blends straight drive into a pivot.","Full wheel: LEFT +1 / RIGHT −1 (or reverse).","Feed-forward + RPM error; ramp and cap at ±12 V."],GREEN)
+    d.card(625,625,535,180,"CHILD / LOCAL SUPERVISION","Validate, ramp, drive P4–P7",["Receive voltage, not RPM, over the Smart Cable.","Check lease, health, duty; own ±12 V ramp.","Zero commands request immediate Coast."],GREEN)
     d.line("575,715 625,715",GREEN,True)
     d.note(850,"STEERING FEEDBACK AND DASHBOARD",["Master P21 provides a limited spring/damper in WHEEL; follows steering target in CONTROLLER.","Disarming removes powered steering feedback. Zero throttle while armed retains it.","HUD shows measured wheel position and P17 throttle input, even when CONTROLLER drives."],BLUE)
     d.text(40,1018,"Sources: controller/{main,control,steering,hud}.rs • shared/link/drivetrain.rs",14,"#536879")

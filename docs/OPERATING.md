@@ -18,7 +18,7 @@ If ARM does nothing, use [the HUD troubleshooting guide](HUD.md#when-arm-does-no
 
 ## WHEEL mode
 
-ADI C is unused and may remain empty. The Rotation Sensor on Smart Port 17 supplies signed WHEEL throttle. CENTER resets its current position to 0°; −8°…8° is neutral, +270° is full forward and −270° is full reverse. Any finite position beyond full travel clamps to ±100% rather than faulting. A missing sensor, failed read or nonfinite value still latches `INPUT FAULT`. Verify both directions and usable travel unloaded before driving.
+ADI C is unused and may remain empty. The Rotation Sensor on Smart Port 17 supplies signed WHEEL throttle. CENTER resets its current position to 0°; −8°…8° is neutral, +270° is full forward and −270° is full reverse. Each nonzero request rounds away from zero to the next 10% step; for example, 43% becomes 50% and −43% becomes −50%. Any finite position beyond full travel clamps to ±100% rather than faulting. A missing sensor, failed read or nonfinite value still latches `INPUT FAULT`. Verify both directions and usable travel unloaded before driving.
 
 The **left button, ADI A**, is a hold-to-run control. The **right button, ADI B**, latches E-stop immediately in every state, including startup. In this chair's installed wiring, both read LOW when released and HIGH when pressed; the firmware follows those observed Device Viewer levels.
 
@@ -64,7 +64,7 @@ A latched fault cannot be cleared with ARM or by releasing the stop button. Note
 
 ## Demonstration envelope
 
-WHEEL mode supports forward and reverse from signed P17 rotation and does not pivot at zero throttle. CONTROLLER mode uses signed arcade control and permits an in-place turn with left Y centered. P17 does not affect controller driving. Top side magnitude is 200 motor RPM at 12 V, approximately 3.57 mph **if the assumed wheel diameter and gearing are correct**. Do not treat the HUD estimate as a measured ground-speed limit.
+WHEEL mode supports forward and reverse from signed P17 rotation and permits an in-place turn at zero throttle. Full physical-wheel steering requests full equal/opposite side power. CONTROLLER mode uses signed arcade control and permits an in-place turn with left Y centered. P17 does not affect controller driving. Top side magnitude is 200 motor RPM at 12 V, approximately 3.57 mph **if the assumed wheel diameter and gearing are correct**. Do not treat the HUD estimate as a measured ground-speed limit.
 
 The duty budget allows 120 seconds of accumulated commanded/measured movement unless there is a full 60-second rest. A brief coast does not restore the budget. Stop for a full rest before it expires; expiry latches a duty fault.
 

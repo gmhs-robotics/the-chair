@@ -74,13 +74,23 @@ fn normalized_rotation(degrees: f64) -> Result<f64, StopReason> {
     if !degrees.is_finite() {
         return Err(StopReason::Input);
     }
-    Ok(if degrees.abs() <= ROTATION_NEUTRAL_DEG {
+    let normalized = if degrees.abs() <= ROTATION_NEUTRAL_DEG {
         0.0
     } else {
         degrees.signum()
             * ((degrees.abs() - ROTATION_NEUTRAL_DEG) / (ROTATION_FULL_DEG - ROTATION_NEUTRAL_DEG))
                 .clamp(0.0, 1.0)
-    })
+    };
+    Ok(quantize_up(normalized))
+}
+
+/// Quantize each nonzero request away from zero in 10% steps.
+fn quantize_up(value: f64) -> f64 {
+    if value == 0.0 {
+        return 0.0;
+    }
+    // Small epsilon keeps an exact step from being promoted by floating-point noise.
+    value.signum() * (((value.abs() * 10.0) - 1e-9).ceil() / 10.0).clamp(0.1, 1.0)
 }
 #[cfg(test)]
 mod tests {
@@ -97,5 +107,14 @@ mod tests {
         assert_eq!(normalized_rotation(f64::MAX), Ok(1.0));
         assert_eq!(normalized_rotation(f64::MIN), Ok(-1.0));
         assert!(normalized_rotation(f64::NAN).is_err());
+    }
+
+    #[test]
+    fn rotation_throttle_rounds_up_in_ten_percent_steps() {
+        assert_eq!(quantize_up(0.01), 0.1);
+        assert_eq!(quantize_up(0.40), 0.4);
+        assert_eq!(quantize_up(0.43), 0.5);
+        assert_eq!(quantize_up(-0.43), -0.5);
+        assert_eq!(quantize_up(1.2), 1.0);
     }
 }

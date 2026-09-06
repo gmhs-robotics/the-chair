@@ -251,13 +251,7 @@ impl Control {
                 };
                 self.steer = desired_steer;
                 let targets = match self.mode {
-                    Mode::Wheel => desaturate(
-                        [
-                            self.throttle * (1.0 + self.steer),
-                            self.throttle * (1.0 - self.steer),
-                        ],
-                        1.0,
-                    ),
+                    Mode::Wheel => wheel_targets(self.throttle, self.steer),
                     Mode::Controller => desaturate(
                         [self.throttle + self.steer, self.throttle - self.steer],
                         1.0,
@@ -274,6 +268,14 @@ impl Control {
         }
     }
 }
+
+/// Blend straight drive into a pivot. Full steering always requests full, opposite side power.
+fn wheel_targets(throttle: f64, steer: f64) -> [f64; 2] {
+    let steer = steer.clamp(-1.0, 1.0);
+    let straight = throttle * (1.0 - steer.abs());
+    [straight + steer, straight - steer]
+}
+
 fn speed_voltage(target_rpm: f64, measured_rpm: f64) -> f64 {
     if target_rpm == 0.0 {
         return 0.0;
@@ -430,10 +432,10 @@ mod tests {
         input.steer = 1.0;
         control.update(now + Duration::from_secs(3), CONTROL_INTERVAL, input);
         assert!(control.volts[0] > 0.0);
-        assert_eq!(control.volts[1], 0.0);
+        assert!(control.volts[1] < 0.0);
     }
     #[test]
-    fn wheel_negative_rotation_requests_reverse_without_pivoting() {
+    fn wheel_negative_rotation_requests_reverse_and_zero_throttle_pivots() {
         let now = Instant::now();
         let mut control = Control::default();
         let mut input = ready();
@@ -445,7 +447,26 @@ mod tests {
         input.wheel.throttle = 0.0;
         input.steer = 1.0;
         control.update(now + Duration::from_secs(4), CONTROL_INTERVAL, input);
-        assert_eq!(control.volts, [0.0; 2]);
+        control.update(
+            now + Duration::from_secs(4) + CONTROL_INTERVAL,
+            CONTROL_INTERVAL,
+            input,
+        );
+        assert!(control.volts[0] > 0.0);
+        assert!(control.volts[1] < 0.0);
+    }
+
+    #[test]
+    fn wheel_mix_reaches_full_power_pivot_at_full_steering() {
+        assert_eq!(wheel_targets(0.0, 1.0), [1.0, -1.0]);
+        assert_eq!(wheel_targets(0.7, 1.0), [1.0, -1.0]);
+        assert_eq!(wheel_targets(-0.7, -1.0), [-1.0, 1.0]);
+        assert_eq!(wheel_targets(0.7, 0.0), [0.7, 0.7]);
+        assert!(
+            wheel_targets(0.7, 0.5)
+                .iter()
+                .all(|target| target.abs() <= 1.0)
+        );
     }
     #[test]
     fn both_emergency_stops_work_in_both_modes_and_latch() {

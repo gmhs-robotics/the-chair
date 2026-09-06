@@ -47,7 +47,7 @@ Children have no local throttle, mode selector or rider controls. They retain th
 | External drive ratio | 72:48; wheel turns 1.5 times per motor turn | Complete gear train and ratio direction |
 | Steering cartridge / direction | Blue / Reverse | Installed cartridge; physical right matches HUD right |
 | Encoder / wheel rotation | 1:1 | Full steering gear train |
-| Steering travel | ±70° from manual center | Mechanical stops, cables and hand clearance |
+| Steering travel | ±80° from manual center; 10° control deadzone | Mechanical stops, cables and hand clearance |
 | P17 throttle travel | 0° neutral, +270° forward, −270° reverse; ±8° neutral band | Both directions and installed mechanical travel |
 
 These are configuration values, not findings from the photos. Calibration locations and the speed calculation are in [software design](SAFETY.md#speed-and-steering); record measurements in [commissioning](COMMISSIONING.md).
