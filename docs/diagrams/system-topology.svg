@@ -1,39 +1,26 @@
-<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='910' viewBox='0 0 1200 910' role='img' aria-labelledby='title desc'>
-<title id='title'>Three Brains. One driving authority.</title><desc id='desc'>Cable endpoints define LEFT and RIGHT. Both drivetrain programs share the same runtime.</desc>
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='680' viewBox='0 0 1200 680' role='img' aria-labelledby='title desc'>
+<title id='title'>Three-Brain control layout</title><desc id='desc'>The master calculates commands; each drivetrain Brain controls and monitors four motors.</desc>
 <defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
-<rect width='1200' height='910' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
-<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   01</text>
-<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>Three Brains. One driving authority.</text>
-<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Cable endpoints define LEFT and RIGHT. Both drivetrain programs share the same runtime.</text>
-<rect x='350' y='160' width='500' height='195' rx='12' fill='white' stroke='#cbd7e0'/><rect x='350' y='176' width='5' height='163' rx='2' fill='#086baf'/>
-<text x='372' y='190' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>MASTER / SLOT 1</text>
-<text x='372' y='220' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Steering-wheel V5 Brain</text>
-<text x='372' y='251' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P17 throttle sensor • P18 radio • P21 steering</text>
-<text x='372' y='278' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>ADI A hold / coast • ADI B rider E-stop</text>
-<text x='372' y='305' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>ADI C unused • screen HUD</text>
-<polyline points='475,355 475,408 295,408 295,466' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' />
-<polyline points='725,355 725,408 905,408 905,466' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' />
-<text x='65' y='393' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='700' fill='#086baf'>MASTER P19</text>
-<text x='65' y='437' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#086baf'>Smart Cable to LEFT P21</text>
-<text x='770' y='375' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='700' fill='#086baf'>MASTER P20</text>
-<text x='770' y='398' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#086baf'>Smart Cable to RIGHT P21</text>
-<rect x='40' y='466' width='510' height='195' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='482' width='5' height='163' rx='2' fill='#087f72'/>
-<text x='62' y='496' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>LEFT DRIVETRAIN / SLOT 2</text>
-<text x='62' y='526' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Uplink P21</text>
-<text x='62' y='557' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Bottom P4/P5 • top P6/P7 opposite</text>
-<text x='62' y='584' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Own battery + four-motor telemetry</text>
-<text x='62' y='611' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Assigned LEFT • logical Forward</text>
-<rect x='650' y='466' width='510' height='195' rx='12' fill='white' stroke='#cbd7e0'/><rect x='650' y='482' width='5' height='163' rx='2' fill='#087f72'/>
-<text x='672' y='496' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>RIGHT DRIVETRAIN / SLOT 3</text>
-<text x='672' y='526' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Uplink P21</text>
-<text x='672' y='557' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Bottom P4/P5 • top P6/P7 opposite</text>
-<text x='672' y='584' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Own battery + four-motor telemetry</text>
-<text x='672' y='611' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Assigned RIGHT • logical Reverse</text>
-<text x='165' y='704' font-family='DejaVu Sans, sans-serif' font-size='18' font-weight='700' fill='#086baf'>COMMANDS: master to children    /    HEALTH: children to master</text>
-<rect x='40' y='738' width='1120' height='114' rx='10' fill='#e9eff4'/>
-<text x='60' y='767' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#865900'>POWER IS A SEPARATE VERIFICATION</text>
-<text x='60' y='795' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Owner reports one pack per drive Brain and Smart Cable back-powering of the chain.</text>
-<text x='60' y='822' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Lines identify data endpoints; they do not approve connecting two battery supplies together.</text>
-<text x='40' y='888' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
-<text x='850' y='888' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
+<rect width='1200' height='680' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<rect x='350' y='40' width='500' height='195' rx='12' fill='white' stroke='#cbd7e0'/><rect x='350' y='56' width='5' height='163' rx='2' fill='#086baf'/>
+<text x='372' y='70' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>MASTER / SLOT 1</text>
+<text x='372' y='100' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Reads controls and commands both sides</text>
+<text x='372' y='131' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P17 throttle • P21 steering • optional radio</text>
+<text x='372' y='158' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Runs HUD, arming, drive mixing and system safety</text>
+<text x='372' y='185' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P19 sends LEFT • P20 sends RIGHT</text>
+<polyline points='475,235 475,300 295,300 295,350' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='725,235 725,300 905,300 905,350' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='401' y='275' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#086baf'>COMMANDS DOWN • HEALTH BACK</text>
+<rect x='40' y='350' width='510' height='230' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='366' width='5' height='198' rx='2' fill='#087f72'/>
+<text x='62' y='380' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>LEFT / SLOT 2</text>
+<text x='62' y='410' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Controls four LEFT motors</text>
+<text x='62' y='441' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P21 receives target and returns telemetry</text>
+<text x='62' y='468' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P4–P7 drive the LEFT side</text>
+<text x='62' y='495' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Checks command lease, motors and battery</text>
+<rect x='650' y='350' width='510' height='230' rx='12' fill='white' stroke='#cbd7e0'/><rect x='650' y='366' width='5' height='198' rx='2' fill='#087f72'/>
+<text x='672' y='380' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>RIGHT / SLOT 3</text>
+<text x='672' y='410' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Controls four RIGHT motors</text>
+<text x='672' y='441' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P21 receives target and returns telemetry</text>
+<text x='672' y='468' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P4–P7 drive the RIGHT side</text>
+<text x='672' y='495' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Checks command lease, motors and battery</text>
 </svg>

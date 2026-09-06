@@ -7,16 +7,18 @@ OUT = Path(__file__).resolve().parents[1] / "docs/diagrams"
 BLUE, GREEN, RED, AMBER = "#086baf", "#087f72", "#b32d45", "#865900"
 
 class Diagram:
-    def __init__(self, number, title, subtitle, height):
+    def __init__(self, number, title, subtitle, height, plain=False):
         self.height = height
+        self.plain = plain
         self.parts = [
             f"<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='{height}' viewBox='0 0 1200 {height}' role='img' aria-labelledby='title desc'>",
             f"<title id='title'>{escape(title)}</title><desc id='desc'>{escape(subtitle)}</desc>",
             "<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>",
             f"<rect width='1200' height='{height}' fill='#f4f7fa'/><rect width='1200' height='8' fill='{BLUE}'/>"]
-        self.text(40,44,f"THE CHAIR   /   FIELD GUIDE   /   {number}",13,BLUE,True)
-        self.text(40,88,title,32,bold=True)
-        self.text(40,120,subtitle,17,"#536879")
+        if not plain:
+            self.text(40,44,f"THE CHAIR   /   FIELD GUIDE   /   {number}",13,BLUE,True)
+            self.text(40,88,title,32,bold=True)
+            self.text(40,120,subtitle,17,"#536879")
     def text(self,x,y,value,size=17,color="#142b3c",bold=False):
         self.parts.append(f"<text x='{x}' y='{y}' font-family='DejaVu Sans, sans-serif' font-size='{size}' font-weight='{700 if bold else 400}' fill='{color}'>{escape(value)}</text>")
     def card(self,x,y,w,h,label,title,lines,color=BLUE):
@@ -32,23 +34,19 @@ class Diagram:
         self.text(60,y+29,title,17,color,True)
         for i,line in enumerate(lines): self.text(60,y+57+27*i,line,16,"#536879")
     def save(self,name):
-        self.text(40,self.height-22,"SCHEMATIC • NOT TO SCALE",12,"#536879",True)
-        self.text(850,self.height-22,"V5 / THREE-BRAIN CONFIGURATION",12,"#536879")
+        if not self.plain:
+            self.text(40,self.height-22,"SCHEMATIC • NOT TO SCALE",12,"#536879",True)
+            self.text(850,self.height-22,"V5 / THREE-BRAIN CONFIGURATION",12,"#536879")
         (OUT/name).write_text("\n".join(self.parts)+"\n</svg>\n")
 
 def topology():
-    d=Diagram("01","Three Brains. One driving authority.","Cable endpoints define LEFT and RIGHT. Both drivetrain programs share the same runtime.",910)
-    d.card(350,160,500,195,"MASTER / SLOT 1","Steering-wheel V5 Brain",["P17 throttle sensor • P18 radio • P21 steering","ADI A hold / brake • ADI B rider E-stop","ADI C unused • screen HUD"])
-    d.line("475,355 475,408 295,408 295,466")
-    d.line("725,355 725,408 905,408 905,466")
-    d.text(65,393,"MASTER P19",16,BLUE,True)
-    d.text(65,437,"Smart Cable to LEFT P21",17,BLUE)
-    d.text(770,375,"MASTER P20",16,BLUE,True)
-    d.text(770,398,"Smart Cable to RIGHT P21",17,BLUE)
-    for x,side,slot,direction in [(40,"LEFT",2,"Forward"),(650,"RIGHT",3,"Reverse")]:
-        d.card(x,466,510,195,f"{side} DRIVETRAIN / SLOT {slot}","Uplink P21",["Bottom P4/P5 • top P6/P7 opposite","Own battery + four-motor telemetry",f"Assigned {side} • logical {direction}"],GREEN)
-    d.text(165,704,"COMMANDS: master to children    /    HEALTH: children to master",18,BLUE,True)
-    d.note(738,"POWER IS A SEPARATE VERIFICATION",["Owner reports one pack per drive Brain and Smart Cable back-powering of the chain.","Lines identify data endpoints; they do not approve connecting two battery supplies together."])
+    d=Diagram("01","Three-Brain control layout","The master calculates commands; each drivetrain Brain controls and monitors four motors.",680,plain=True)
+    d.card(350,40,500,195,"MASTER / SLOT 1","Reads controls and commands both sides",["P17 throttle • P21 steering • optional radio","Runs HUD, arming, drive mixing and system safety","P19 sends LEFT • P20 sends RIGHT"])
+    d.line("475,235 475,300 295,300 295,350",arrow=True)
+    d.line("725,235 725,300 905,300 905,350",arrow=True)
+    d.text(401,275,"COMMANDS DOWN • HEALTH BACK",17,BLUE,True)
+    d.card(40,350,510,230,"LEFT / SLOT 2","Controls four LEFT motors",["P21 receives target and returns telemetry","P4–P7 drive the LEFT side","Checks command lease, motors and battery"],GREEN)
+    d.card(650,350,510,230,"RIGHT / SLOT 3","Controls four RIGHT motors",["P21 receives target and returns telemetry","P4–P7 drive the RIGHT side","Checks command lease, motors and battery"],GREEN)
     d.save("system-topology.svg")
 
 def ports():
