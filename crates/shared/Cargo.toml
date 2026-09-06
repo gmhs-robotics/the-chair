@@ -2,6 +2,9 @@
 name = "chair-shared"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
 
 [dependencies]
 vexide = { workspace = true }
@@ -10,3 +13,6 @@ postcard = { workspace = true }
 cobs = { workspace = true }
 thiserror = { workspace = true }
 crc = "3.4.0"
+
+[target.'cfg(target_os = "vexos")'.dependencies]
+vex-sdk = "0.29.0-rc.1"

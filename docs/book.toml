@@ -2,7 +2,7 @@
 authors = ["The Chair team"]
 language = "en"
 src = "."
-title = "The Chair Hardware"
+title = "The Chair Field Guide"
 
 [build]
 build-dir = "../target/docs-book"

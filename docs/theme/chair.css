@@ -1,51 +1,40 @@
-:root {
-  --chair-bg: #050505;
-  --chair-paper: #0b0b0b;
-  --chair-line: #d8d8d0;
-  --chair-muted: #9d9d96;
-  --chair-accent: #ff7479;
-  --chair-green: #40d681;
-}
-
+/* Field guide: readable on a laptop, phone and printed commissioning sheet. */
 html.coal,
 html.navy,
 html.ayu {
-  --bg: var(--chair-bg);
-  --sidebar-bg: #090909;
-  --sidebar-fg: #d8d8d0;
-  --sidebar-active: var(--chair-accent);
-  --links: #79c7ff;
-  --inline-code-color: #ffd7d9;
-  --table-border-color: #474743;
+  --bg: #101b25;
+  --sidebar-bg: #0c151e;
+  --sidebar-fg: #c4d2de;
+  --sidebar-active: #7bd5cc;
+  --links: #87caff;
+  --inline-code-color: #c6e8ff;
+  --table-border-color: #465968;
 }
-
-.content main {
-  line-height: 1.6;
-}
-
-.content h1,
-.content h2,
-.content h3 {
-  letter-spacing: 0;
-}
-
+.content main { max-width: 1120px; line-height: 1.7; }
+.content h1 { font-size: 2.2em; line-height: 1.2; margin-bottom: 1.1em; }
+.content h2 { margin-top: 2.2em; padding-bottom: .35em; border-bottom: 1px solid var(--table-border-color); }
 .content img[src*="diagrams/"] {
   display: block;
-  width: min(100%, 980px);
-  margin: 1.25rem auto 1.75rem;
-  border: 1px solid #3b3b37;
-  border-radius: 8px;
-  background: var(--chair-paper);
+  width: 100%;
+  height: auto;
+  margin: 1.8rem auto 2.4rem;
+  border: 1px solid #cbd7e0;
+  border-radius: 10px;
+  background: #f4f7fa;
 }
-
-.content table {
-  font-size: 0.95em;
+.content table { width: 100%; font-size: .94em; }
+.content table th, .content table td { padding: .65em .8em; vertical-align: top; text-align: left; }
+.content code { border-radius: 4px; }
+.content li { margin-bottom: .45em; }
+@media (max-width: 640px) {
+  .content h1 { font-size: 1.8em; }
+  .content table { display: block; overflow-x: auto; }
+  .content table th, .content table td { min-width: 130px; }
 }
-
-.content code {
-  border-radius: 4px;
-}
-
-.content blockquote {
-  border-left-color: var(--chair-accent);
+@media print {
+  .content main { max-width: none; color: #142b3c; }
+  .content h2 { break-after: avoid; }
+  .content img, .content tr { break-inside: avoid; }
+  .content a { color: #086baf; }
+  .content table { font-size: .85em; }
 }

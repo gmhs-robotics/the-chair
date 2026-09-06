@@ -1,6 +1,8 @@
 [target.'cfg(target_os = "vexos")']
 rustflags = ["-Clink-arg=-Tvexide.ld"]
 
-[unstable]
-build-std = ["std", "panic_abort"]
-build-std-features = ["compiler-builtins-mem"]
+# Pass build-std only for V5 builds.
+# Enabling it globally rebuilds host std too and breaks current nightly tests.
+
+[alias]
+firmware = "build --workspace --release --target .cargo/thumbv7a-vex-v5-chair.json -Zjson-target-spec -Zbuild-std=std,panic_abort -Zbuild-std-features=compiler-builtins-mem"

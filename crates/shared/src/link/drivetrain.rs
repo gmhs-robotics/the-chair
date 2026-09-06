@@ -1,301 +1,429 @@
-use std::time::{Duration, Instant};
-
+use crate::{
+    link::{
+        health::{BatteryHealth, DRIVE_MOTOR_PORTS, MAX_MOTORS, MotorHealth},
+        master::MasterNode,
+        *,
+    },
+    safety::*,
+};
 use postcard::experimental::max_size::MaxSize;
 use serde::{Deserialize, Serialize};
+use std::{
+    cell::RefCell,
+    fmt::Write as _,
+    rc::Rc,
+    time::{Duration, Instant},
+};
 use vexide::{
-    adi::{
-        AdiPort,
-        digital::AdiDigitalIn,
-        potentiometer::{AdiPotentiometer, PotentiometerType},
-    },
-    prelude::{SmartDevice, sleep},
-    smart::{
-        PortError,
-        motor::{BrakeMode, Motor},
-    },
+    color::Color,
+    display::{Font, FontFamily, FontSize, RenderMode, Text},
+    prelude::*,
+    smart::motor::BrakeMode,
+    task::{self, Task},
 };
 
-use crate::link::{
-    ChildNode, LinkError, Node, NodeKind, NodeType,
-    health::{BatteryHealth, HealthResponse, MAX_MOTORS, MotorHealth},
-    master::MasterNode,
-};
-
-const RPM_REPORT_INTERVAL: Duration = Duration::from_millis(50);
-const COMMAND_TIMEOUT: Duration = Duration::from_millis(250);
+const MOTOR_READY_DWELL: Duration = Duration::from_millis(300);
 
 pub struct DrivetrainNode;
-
 impl NodeType for DrivetrainNode {
     const KIND: NodeKind = NodeKind::Drivetrain;
 }
-
 impl ChildNode for DrivetrainNode {
     type Request = DrivetrainRequest;
     type Response = DrivetrainResponse;
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxSize)]
 pub enum DrivetrainRequest {
     SetVoltage { millivolts: i16 },
 }
-
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, MaxSize)]
 pub enum DrivetrainResponse {
-    Gear(Gear),
-    Speed(f64),
-    Rpm(f64),
-    EmergencyStop,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, MaxSize)]
-pub enum Gear {
-    #[default]
-    Park,
-    Reverse,
-    Drive,
+    Reserved,
 }
 
 pub struct Drivetrain {
-    motors: [Motor; MAX_MOTORS],
+    motors: [Motor; 4],
     master: Node<DrivetrainNode, MasterNode>,
-    controls: Option<DrivetrainControls>,
-    last_command: Option<Instant>,
-    last_reported_gear: Option<Gear>,
-    last_reported_speed: Option<f64>,
+    hud: DrivetrainHud,
 }
-
+#[derive(Clone, Copy, Default)]
+struct DrivetrainView {
+    target: f64,
+    voltage: f64,
+    health: HealthResponse,
+    diagnostics: LinkDiagnostics,
+    side: Option<Side>,
+    fault: Option<StopReason>,
+    sequence: Option<u32>,
+}
+struct DrivetrainHud {
+    view: Rc<RefCell<DrivetrainView>>,
+    // Dropping a vexide Task cancels it. Keep ownership for Drivetrain lifetime.
+    _task: Task<()>,
+}
+impl DrivetrainHud {
+    fn new(mut display: Display) -> Self {
+        display.set_render_mode(RenderMode::DoubleBuffered);
+        let view = Rc::new(RefCell::new(DrivetrainView::default()));
+        let task_view = view.clone();
+        let task = task::spawn(async move {
+            loop {
+                let view = *task_view.borrow();
+                draw_status(&mut display, view);
+                sleep(Duration::from_millis(250)).await;
+            }
+        });
+        Self { view, _task: task }
+    }
+    fn update(&mut self, view: DrivetrainView) {
+        *self.view.borrow_mut() = view;
+    }
+}
 impl Drivetrain {
-    pub const fn new(
-        motors: [Motor; MAX_MOTORS],
+    pub fn new(
+        motors: [Motor; 4],
         master: Node<DrivetrainNode, MasterNode>,
+        display: Display,
     ) -> Self {
         Self {
             motors,
             master,
-            controls: None,
-            last_command: None,
-            last_reported_gear: None,
-            last_reported_speed: None,
+            hud: DrivetrainHud::new(display),
         }
     }
-
-    #[must_use]
-    pub fn with_controls(mut self, controls: DrivetrainControls) -> Self {
-        self.controls = Some(controls);
-        self
-    }
-
     pub async fn run(mut self) {
-        let mut next_rpm_report = Instant::now();
-        self.brake_all();
-
+        let mut configured_side = None;
+        let mut last_tick = Instant::now();
+        let mut duty = DutyBudget::default();
+        let mut voltage: f64 = 0.0;
+        let mut target: f64 = 0.0;
+        let mut health = HealthResponse {
+            initializing: true,
+            ..HealthResponse::default()
+        };
+        let mut motors_ready_since = None;
+        let mut motor_configured = [false; MAX_MOTORS];
+        let mut probe_index = 0;
+        let mut initializing = true;
         loop {
-            let control_state = self.controls.as_ref().map(DrivetrainControls::read);
-            match control_state {
-                Some(Ok(state)) if state.estop => self.latch_local_estop().await,
-                Some(Ok(state)) => self.report_controls(state),
-                Some(Err(_)) => self.latch_local_estop().await,
-                None => {}
-            }
-
-            let motors = &self.motors;
-            match self.master.service(|| collect_health(motors)) {
-                Ok(report) => {
-                    if report.estopped {
-                        self.latch_local_estop().await;
-                    }
-
-                    if let Some(DrivetrainRequest::SetVoltage { millivolts }) = report.request {
-                        if !self.set_voltage(f64::from(millivolts) / VOLTS_TO_MILLIVOLTS) {
-                            self.latch_local_estop().await;
-                        }
-                        self.last_command = Some(Instant::now());
-                    }
-                }
-                Err(_) => {
-                    self.brake_all();
-                    self.last_command = None;
-                }
-            }
-
             let now = Instant::now();
-            if self
-                .last_command
-                .is_some_and(|last_command| now.duration_since(last_command) >= COMMAND_TIMEOUT)
+            let dt = now.duration_since(last_tick);
+            last_tick = now;
+            // Always check before accepting new input. A delayed frame cannot revive motion.
+            self.master.lease.expired(now);
+            if dt > MAX_LOOP_GAP {
+                self.master.stop(StopReason::LoopStall);
+            }
+            if vexide::competition::mode() != vexide::competition::CompetitionMode::Driver {
+                self.master.stop(StopReason::Competition);
+            }
+            health.stopped = self.master.fault();
+            health.last_command = self.master.lease.sequence;
+            health.initializing = initializing;
+            if self.master.lease.sequence.is_some() {
+                health.battery = BatteryHealth::collect();
+            }
+            // Service P21 before touching Smart Motors. Missing-device SDK calls must never
+            // starve SYN/ACK, zero commands, E-stop, or health responses.
+            if self.master.lease.sequence.is_some()
+                && let Some(reason) = health.fault()
+            {
+                self.master.stop(reason);
+            }
+            match self.master.service(now, health) {
+                Ok(report) => {
+                    if let Some(DrivetrainRequest::SetVoltage { millivolts }) = report.request {
+                        target = f64::from(millivolts) / 1000.0;
+                    }
+                }
+                // A full UART queue or bounded RX burst is transient. The master's health retry
+                // and this child's command lease still bound prolonged loss.
+                Err(LinkError::Backlog) => {}
+                Err(_) if self.master.lease.sequence.is_some() => {
+                    self.master.stop(StopReason::Protocol)
+                }
+                // Serial startup can begin mid-frame when the master was already running.
+                // Before the first accepted zero command there is no motion authority, so discard
+                // malformed startup traffic and wait braked for the next clean handshake.
+                Err(_) => {}
+            }
+
+            if initializing && self.master.lease.sequence.is_some() && self.master.fault().is_none()
+            {
+                health.motors[probe_index] =
+                    self.probe_startup_motor(probe_index, &mut motor_configured[probe_index]);
+                probe_index = (probe_index + 1) % MAX_MOTORS;
+                let motors_ready = motor_configured.iter().all(|configured| *configured)
+                    && health.motors.iter().all(|motor| {
+                        motor.is_some_and(|motor| {
+                            motor.fault().is_none() && motor.temperature <= MOTOR_RESTART_C
+                        })
+                    });
+                if motors_ready {
+                    let ready_since = *motors_ready_since.get_or_insert(now);
+                    if now.duration_since(ready_since) >= MOTOR_READY_DWELL {
+                        initializing = false;
+                    }
+                } else {
+                    motors_ready_since = None;
+                }
+            } else if !initializing {
+                health = HealthResponse::collect(
+                    &self.motors,
+                    self.master.fault(),
+                    self.master.lease.sequence,
+                );
+            }
+            health.initializing = initializing;
+            health.stopped = self.master.fault();
+            health.last_command = self.master.lease.sequence;
+            if let Some(reason) = health.fault() {
+                self.master.stop(reason);
+            }
+
+            if let Some(assignment) = self.master.assignment()
+                && configured_side.is_none()
+                && !initializing
+                && self.master.fault().is_none()
             {
                 self.brake_all();
-                self.last_command = None;
-            }
-
-            if now >= next_rpm_report {
-                if let Some(rpm) = average_rpm(&self.motors) {
-                    let _ = self.master.report_rpm(rpm);
+                // Bottom P4/P5 and top P6/P7 are gear-coupled in opposite directions.
+                // RIGHT remains mirrored relative to LEFT for physical forward travel.
+                for (index, motor) in self.motors.iter_mut().enumerate() {
+                    let direction = if motor_reversed(assignment.side, index) {
+                        Direction::Reverse
+                    } else {
+                        Direction::Forward
+                    };
+                    if motor.set_direction(direction).is_err() {
+                        self.master.stop(StopReason::Telemetry);
+                    }
                 }
-                next_rpm_report = now + RPM_REPORT_INTERVAL;
+                println!(
+                    "[MOTOR CONFIG] side={:?} P4={} P5={} P6={} P7={}",
+                    assignment.side,
+                    direction_label(motor_reversed(assignment.side, 0)),
+                    direction_label(motor_reversed(assignment.side, 1)),
+                    direction_label(motor_reversed(assignment.side, 2)),
+                    direction_label(motor_reversed(assignment.side, 3)),
+                );
+                configured_side = Some(assignment.side);
             }
-
-            sleep(Motor::UPDATE_INTERVAL).await;
+            if duty.update(now, dt, voltage.abs() > 0.01 || health.max_rpm() > 5.0) {
+                self.master.stop(StopReason::DutyLimit);
+            }
+            if self.master.fault().is_some() {
+                target = 0.0;
+                voltage = 0.0;
+                self.brake_all();
+            } else if initializing {
+                // probe_startup_motor() requests Brake. Do not turn an expected discovery
+                // miss into a latch by repeating the strict runtime brake path here.
+                target = 0.0;
+                voltage = 0.0;
+            } else if configured_side.is_none() {
+                target = 0.0;
+                voltage = 0.0;
+                self.brake_all();
+            } else {
+                voltage = ramp_voltage(voltage, target, dt);
+                if voltage == 0.0 {
+                    self.coast_all();
+                } else {
+                    let mut ok = true;
+                    for motor in &mut self.motors {
+                        ok &= motor.set_voltage(voltage).is_ok();
+                    }
+                    if !ok {
+                        self.master.stop(StopReason::Telemetry);
+                        self.brake_all();
+                    }
+                }
+            }
+            self.update_status(target, voltage, health);
+            // Faulted nodes continue answering health and retry braking every tick.
+            sleep(CONTROL_INTERVAL).await;
         }
     }
-
-    fn set_voltage(&mut self, voltage: f64) -> bool {
-        let mut succeeded = true;
-        for motor in &mut self.motors {
-            succeeded &= motor.set_voltage(voltage).is_ok();
-        }
-        succeeded
+    fn update_status(&mut self, target: f64, voltage: f64, health: HealthResponse) {
+        self.hud.update(DrivetrainView {
+            target,
+            voltage,
+            health,
+            diagnostics: self.master.diagnostics(),
+            side: self.master.assignment().map(|assignment| assignment.side),
+            fault: self.master.fault(),
+            sequence: self.master.lease.sequence,
+        });
     }
-
     fn brake_all(&mut self) {
         for motor in &mut self.motors {
-            let _ = motor.brake(BrakeMode::Brake);
+            if motor.brake(BrakeMode::Brake).is_err() {
+                self.master.stop(StopReason::Telemetry);
+            }
         }
     }
-
-    fn report_controls(&mut self, state: DrivetrainControlState) {
-        if self.last_reported_gear != Some(state.gear)
-            && self.master.report_gear_shift(state.gear).is_ok()
-        {
-            self.last_reported_gear = Some(state.gear);
-        }
-
-        if self
-            .last_reported_speed
-            .is_none_or(|speed| (speed - state.max_voltage).abs() >= 0.05)
-            && self.master.report_max_speed(state.max_voltage).is_ok()
-        {
-            self.last_reported_speed = Some(state.max_voltage);
+    fn coast_all(&mut self) {
+        for motor in &mut self.motors {
+            if motor.brake(BrakeMode::Coast).is_err() {
+                self.master.stop(StopReason::Telemetry);
+            }
         }
     }
-
-    async fn latch_local_estop(&mut self) {
-        self.brake_all();
-        let _ = self.master.report_emergency_stop();
-        loop {
-            sleep(Duration::from_secs(1)).await;
+    fn probe_startup_motor(&mut self, index: usize, configured: &mut bool) -> Option<MotorHealth> {
+        let motor = &mut self.motors[index];
+        if !*configured {
+            *configured = motor.brake(BrakeMode::Brake).is_ok()
+                && motor.set_current_limit(MOTOR_CURRENT_LIMIT_A).is_ok()
+                && motor.set_voltage_limit(MAX_DRIVE_VOLTS).is_ok();
         }
+        let health = MotorHealth::collect(motor);
+        if health.is_none() {
+            *configured = false;
+        }
+        health
     }
 }
-
-pub struct DrivetrainControls {
-    estop: AdiDigitalIn,
-    gear: AdiPotentiometer,
-    speed: AdiPotentiometer,
-}
-
-impl DrivetrainControls {
-    pub fn new(estop: AdiPort, gear: AdiPort, speed: AdiPort) -> Self {
-        Self {
-            estop: AdiDigitalIn::new(estop),
-            gear: AdiPotentiometer::new(gear, PotentiometerType::Legacy),
-            speed: AdiPotentiometer::new(speed, PotentiometerType::Legacy),
-        }
+fn draw_status(display: &mut Display, view: DrivetrainView) {
+    let role = view.side.map_or("UNASSIGNED", |side| match side {
+        Side::Left => "LEFT",
+        Side::Right => "RIGHT",
+    });
+    let status = view.fault.map_or_else(
+        || {
+            if view.side.is_none() {
+                "WAITING FOR MASTER SYN".to_owned()
+            } else if view.sequence.is_none() {
+                "ACK SENT / WAIT ZERO".to_owned()
+            } else if view.health.initializing {
+                "INITIALIZING MOTORS".to_owned()
+            } else {
+                "LINK ACTIVE".to_owned()
+            }
+        },
+        |reason| format!("FAULT: {}", reason.label()),
+    );
+    let mut motor_status = String::from("MOTORS");
+    for (index, motor) in view.health.motors.iter().enumerate() {
+        let state = match motor {
+            None => "--C/F--".to_owned(),
+            Some(motor) => format!("{:.0}C/F{:X}", motor.temperature, motor.faults),
+        };
+        let _ = write!(motor_status, " {}:{state}", DRIVE_MOTOR_PORTS[index]);
     }
-
-    fn read(&self) -> Result<DrivetrainControlState, PortError> {
-        let gear_angle = self.gear.angle()?.as_degrees();
-        let speed_angle = self.speed.angle()?.as_degrees();
-        let max_angle = PotentiometerType::LEGACY_MAX_ANGLE.as_degrees();
-
-        Ok(DrivetrainControlState {
-            // The physical E-stop switch is active-high.
-            estop: self.estop.is_high()?,
-            gear: gear_for_angle(gear_angle, max_angle),
-            max_voltage: Motor::V5_MAX_VOLTAGE * normalized_pot_angle(speed_angle, max_angle),
+    display.erase(Color::BLACK);
+    display.draw_text(
+        &Text::from_string(
+            format!("DRIVETRAIN / {role}"),
+            Font::new(FontSize::MEDIUM, FontFamily::Monospace),
+            [10, 8],
+        ),
+        Color::WHITE,
+        None,
+    );
+    for (line, y, color) in [
+        (
+            status,
+            42,
+            if view.fault.is_some() {
+                Color::RED
+            } else {
+                Color::YELLOW
+            },
+        ),
+        ("P21 GENERIC SERIAL".to_owned(), 72, Color::WHITE),
+        (
+            format!(
+                "RX {}   TX {}",
+                view.diagnostics.rx_bytes, view.diagnostics.tx_bytes
+            ),
+            98,
+            Color::WHITE,
+        ),
+        (
+            format!(
+                "BAD {}   SEQ {}",
+                view.diagnostics.bad_frames,
+                view.sequence.unwrap_or(0)
+            ),
+            124,
+            Color::WHITE,
+        ),
+        (
+            format!("TARGET {:.2}V   OUT {:.2}V", view.target, view.voltage),
+            150,
+            Color::WHITE,
+        ),
+        (motor_status, 176, Color::WHITE),
+        (
+            "Tap matching Master card to retry".to_owned(),
+            202,
+            Color::YELLOW,
+        ),
+    ] {
+        display.draw_text(
+            &Text::from_string(
+                line,
+                Font::new(FontSize::SMALL, FontFamily::Monospace),
+                [10, y],
+            ),
+            color,
+            None,
+        );
+    }
+    display.render();
+}
+impl Node<MasterNode, DrivetrainNode> {
+    pub fn set_voltage(&mut self, voltage: f64) -> Result<(), LinkError> {
+        if !voltage.is_finite() || !(-MAX_DRIVE_VOLTS..=MAX_DRIVE_VOLTS).contains(&voltage) {
+            return Err(LinkError::Protocol);
+        }
+        self.request_node(DrivetrainRequest::SetVoltage {
+            millivolts: (voltage * 1000.0).round() as i16,
         })
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-struct DrivetrainControlState {
-    estop: bool,
-    gear: Gear,
-    max_voltage: f64,
+const fn motor_reversed(side: Side, index: usize) -> bool {
+    matches!(side, Side::Left) != (index >= 2)
 }
 
-fn normalized_pot_angle(angle: f64, max_angle: f64) -> f64 {
-    (angle / max_angle).clamp(0.0, 1.0)
+const fn direction_label(reversed: bool) -> &'static str {
+    if reversed { "REVERSE" } else { "FORWARD" }
 }
 
-fn gear_for_angle(angle: f64, max_angle: f64) -> Gear {
-    match normalized_pot_angle(angle, max_angle) {
-        position if position < 1.0 / 3.0 => Gear::Reverse,
-        position if position > 2.0 / 3.0 => Gear::Drive,
-        _ => Gear::Park,
+/// Shared entry point makes left/right deployment functionally identical.
+pub async fn run_node(peripherals: Peripherals) {
+    crate::install_panic_stop();
+    let mut motors = [
+        Motor::new(peripherals.port_4, Gearset::Green, Direction::Forward),
+        Motor::new(peripherals.port_5, Gearset::Green, Direction::Forward),
+        Motor::new(peripherals.port_6, Gearset::Green, Direction::Forward),
+        Motor::new(peripherals.port_7, Gearset::Green, Direction::Forward),
+    ];
+    for motor in &mut motors {
+        let _ = motor.brake(BrakeMode::Brake);
     }
-}
-
-fn average_rpm(motors: &[Motor; MAX_MOTORS]) -> Option<f64> {
-    let (total, count) = motors
-        .iter()
-        .filter_map(|motor| motor.velocity().ok())
-        .fold((0.0, 0), |(total, count), rpm| (total + rpm, count + 1));
-
-    (count > 0).then(|| total / f64::from(count))
-}
-
-fn collect_health(motors: &[Motor; MAX_MOTORS]) -> HealthResponse {
-    HealthResponse {
-        battery: BatteryHealth::collect(),
-        motors: motors.each_ref().map(motor_health),
-    }
-}
-
-fn motor_health(motor: &Motor) -> Option<MotorHealth> {
-    Some(MotorHealth {
-        faults: motor.faults().ok()?.bits(),
-        temperature: motor.temperature().ok()? as f32,
-        current: motor.current().ok()? as f32,
-        voltage: motor.voltage().ok()? as f32,
-    })
-}
-
-const VOLTS_TO_MILLIVOLTS: f64 = 1000.0;
-
-impl Node<MasterNode, DrivetrainNode> {
-    pub fn set_voltage(&mut self, voltage: f64) -> Result<(), LinkError> {
-        let millivolts = (voltage.clamp(-Motor::V5_MAX_VOLTAGE, Motor::V5_MAX_VOLTAGE)
-            * VOLTS_TO_MILLIVOLTS)
-            .round() as i16;
-        self.request_node(DrivetrainRequest::SetVoltage { millivolts })
-    }
-}
-
-impl Node<DrivetrainNode, MasterNode> {
-    pub fn report_gear_shift(&mut self, gear: Gear) -> Result<(), LinkError> {
-        self.respond(DrivetrainResponse::Gear(gear))
-    }
-
-    pub fn report_max_speed(&mut self, speed: f64) -> Result<(), LinkError> {
-        self.respond(DrivetrainResponse::Speed(speed))
-    }
-
-    pub fn report_rpm(&mut self, rpm: f64) -> Result<(), LinkError> {
-        self.respond(DrivetrainResponse::Rpm(rpm))
-    }
-
-    pub fn report_emergency_stop(&mut self) -> Result<(), LinkError> {
-        self.respond(DrivetrainResponse::EmergencyStop)
-    }
+    // Serial port configuration happens only after all motor stop commands.
+    let master = Node::open(peripherals.port_21).await;
+    Drivetrain::new(motors, master, peripherals.display)
+        .run()
+        .await;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Gear, gear_for_angle, normalized_pot_angle};
-
-    const MAX_ANGLE: f64 = 250.0;
+    use super::*;
 
     #[test]
-    fn gear_pot_uses_rear_park_forward_zones() {
-        assert_eq!(gear_for_angle(0.0, MAX_ANGLE), Gear::Reverse);
-        assert_eq!(gear_for_angle(125.0, MAX_ANGLE), Gear::Park);
-        assert_eq!(gear_for_angle(250.0, MAX_ANGLE), Gear::Drive);
-    }
-
-    #[test]
-    fn speed_pot_covers_full_output_range() {
-        assert_eq!(normalized_pot_angle(0.0, MAX_ANGLE), 0.0);
-        assert_eq!(normalized_pot_angle(MAX_ANGLE, MAX_ANGLE), 1.0);
+    fn top_pair_reverses_relative_to_bottom_and_right_mirrors_left() {
+        assert_eq!(
+            std::array::from_fn::<_, MAX_MOTORS, _>(|i| motor_reversed(Side::Left, i)),
+            [true, true, false, false]
+        );
+        assert_eq!(
+            std::array::from_fn::<_, MAX_MOTORS, _>(|i| motor_reversed(Side::Right, i)),
+            [false, false, true, true]
+        );
     }
 }

@@ -1,4 +1,3 @@
 [toolchain]
-# Newer nightlies changed VaList in a way vex-sdk-mock 0.1.0 does not yet support.
-channel = "nightly-2025-11-26"
-components = ["rust-src", "rustfmt", "clippy"]
+channel = "nightly-2026-09-04"
+components = ["rust-src", "rustfmt", "clippy", "rust-analyzer"]

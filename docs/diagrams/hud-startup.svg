@@ -1,0 +1,41 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 240' width='960' height='480' role='img' aria-labelledby='title desc'>
+<title id='title'>Waiting for drive nodes</title><desc id='desc'>Synthetic firmware-rendered preview. WHEEL, WAIT LINKS, no telemetry or calibration. Host font metrics approximate the Brain.</desc>
+<rect x='0' y='0' width='480' height='240' fill='#101722'/>
+<text x='10' y='22' font-family='monospace' font-size='16' fill='#f1f5f9'>THE CHAIR / WHEEL</text>
+<rect x='351' y='3' width='120' height='25' fill='#ffd477'/>
+<text x='357' y='22' font-family='monospace' font-size='16' fill='#101722'>WAIT LINKS</text>
+<text x='12' y='71' font-family='monospace' font-size='28' fill='#f1f5f9'>--.--</text>
+<text x='12' y='89' font-family='monospace' font-size='12' fill='#9cadc3'>MPH estimated</text>
+<text x='12' y='108' font-family='monospace' font-size='12' fill='#9cadc3'>Duty 120s</text>
+<text x='332' y='52' font-family='monospace' font-size='12' fill='#f1f5f9'>P17 ROT   +0%</text>
+<rect x='332' y='59' width='136' height='10' fill='#1c2939'/>
+<text x='332' y='89' font-family='monospace' font-size='12' fill='#9cadc3'>POS   0.0 DEG</text>
+<text x='332' y='108' font-family='monospace' font-size='12' fill='#9cadc3'>P18 OFF A:L B:L</text>
+<circle cx='240' cy='77' r='35' fill='none' stroke='#69cfff' stroke-width='2'/>
+<circle cx='240' cy='77' r='4' fill='none' stroke='#f1f5f9' stroke-width='2'/>
+<path d='M210 77 L270 77' stroke='#69cfff' stroke-width='2'/>
+<path d='M240 77 L240 107' stroke='#69cfff' stroke-width='2'/>
+<text x='181' y='127' font-family='monospace' font-size='12' fill='#ffd477'>P21 0C ?</text>
+<path d='M202 77 L157 77' stroke='#9cadc3' stroke-width='2'/>
+<path d='M157 77 L157 134' stroke='#9cadc3' stroke-width='2'/>
+<path d='M278 77 L315 77' stroke='#9cadc3' stroke-width='2'/>
+<path d='M315 77 L315 134' stroke='#9cadc3' stroke-width='2'/>
+<rect x='10' y='135' width='223' height='66' fill='#1c2939'/>
+<rect x='10' y='135' width='3' height='66' fill='#ff6675'/>
+<text x='19' y='151' font-family='monospace' font-size='12' fill='#ffd477'>LEFT   P19 - P21</text>
+<text x='19' y='171' font-family='monospace' font-size='12' fill='#9cadc3'>STARTING DRIVE LINK</text>
+<text x='19' y='191' font-family='monospace' font-size='12' fill='#9cadc3'>T0 R0 B0</text>
+<rect x='247' y='135' width='223' height='66' fill='#1c2939'/>
+<rect x='247' y='135' width='3' height='66' fill='#ff6675'/>
+<text x='256' y='151' font-family='monospace' font-size='12' fill='#ffd477'>RIGHT  P20 - P21</text>
+<text x='256' y='171' font-family='monospace' font-size='12' fill='#9cadc3'>STARTING DRIVE LINK</text>
+<text x='256' y='191' font-family='monospace' font-size='12' fill='#9cadc3'>T0 R0 B0</text>
+<rect x='2' y='207' width='116' height='31' fill='#1c2939'/>
+<text x='8' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>MODE / X</text>
+<rect x='122' y='207' width='116' height='31' fill='#1c2939'/>
+<text x='128' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>CENTER</text>
+<rect x='242' y='207' width='116' height='31' fill='#1c2939'/>
+<text x='248' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>ARM / A</text>
+<rect x='362' y='207' width='116' height='31' fill='#571e2c'/>
+<text x='368' y='227' font-family='monospace' font-size='12' fill='#ff6675'>PARK / L1</text>
+</svg>

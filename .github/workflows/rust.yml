@@ -11,17 +11,23 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
         with:
-          # Keep this aligned with rust-toolchain.toml; newer VaList APIs break vex-sdk-mock 0.1.0.
-          toolchain: nightly-2025-11-26
+          # Keep aligned with rust-toolchain.toml and the checked-in V5 target.
+          toolchain: nightly-2026-09-04
           components: rust-src,rustfmt,clippy
+      - name: Verify generated target definition
+        run: |
+          python3 tools/update-target.py
+          git diff --exit-code -- .cargo/thumbv7a-vex-v5-chair.json
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Run host tests
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
       - name: Run Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Check VEX target
-        run: cargo check --workspace --target=armv7a-vex-v5 -Zbuild-std=std,panic_abort -Zbuild-std-features=compiler-builtins-mem
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Link all V5 firmware
+        run: cargo firmware --locked
+      - name: Check shell syntax
+        run: bash -n build.sh check.sh render-hud.sh upload.sh

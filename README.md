@@ -1,112 +1,66 @@
 # The Chair
 
-A school chair converted into a small differential-drive go-kart with VEX V5 hardware and Rust.
+Three VEX V5 Brains, eight drive motors, a resistive steering wheel and an optional V5 controller. Rust firmware for a school robotics demonstrator.
 
-![The Chair drivetrain plate](media/images/banner.webp)
+![Chair wiring overview](docs/diagrams/system-topology.svg)
 
-**[Watch the 13-second driving demo](media/video/driving-demo.mp4)** · **[Read the Stardance devlogs](https://stardance.hackclub.com/projects/4170)**
+**Software checks pass; occupied operation is not validated.** Begin with [commissioning](docs/COMMISSIONING.md). Wheel direction, gearing, steering travel, stopping distance and the reported shared battery supply still require physical verification.
 
-The physical drivetrain has been assembled and driven. The current code is a safer three-Brain redesign of the simple one-Brain program used for the demo. It adds steering feedback, two-button throttle, motor and battery telemetry, link timeouts, and a latched emergency stop. This design still needs full on-chair integration testing; autonomous driving is not implemented yet.
+## Documentation
 
-## How it works
+| Need | Guide |
+| --- | --- |
+| Connect the Brains, motors and controls | [Wiring](docs/WIRING.md) |
+| Start, arm, drive and stop | [Operator guide](docs/OPERATING.md) |
+| Read the screen or troubleshoot arming | [Dashboard](docs/HUD.md) |
+| Understand limits, leases and stop behavior | [Software design](docs/SAFETY.md) |
+| Validate the finished chair | [Commissioning](docs/COMMISSIONING.md) |
+| Build and upload in Nix | [Development](docs/DEVELOPMENT.md) |
 
-The chair uses eight 200 RPM motors, four per side, as a differential drivetrain. A motor coupled to the steering wheel acts as both an angle sensor and a resistive return-to-center mechanism.
+## Controls at a glance
 
-| V5 Brain | Program | Role |
+| Action | WHEEL | CONTROLLER |
 | --- | --- | --- |
-| Controller | `chair-controller` | Reads steering and throttle, mixes left/right voltage, displays status, coordinates safety |
-| Left drive | `chair-left` | Runs four left motors and hosts gear, speed, and E-stop controls |
-| Right drive | `chair-right` | Runs four right motors |
+| Speed / direction | P17 positive forward, negative reverse; hold ADI A | Left stick Y forward/reverse |
+| Steering | Turn wheel | Right stick X |
+| Enable | Left wheel button, ADI A | Press A once to arm; no hold |
+| Coast stop | Release left button; stays armed | Center both sticks; stays armed |
+| Latched E-stop | Right wheel button, ADI B | Rider right button or controller B |
+| Arm / park / mode | Display ARM / PARK / MODE | A / L1 / X, or display |
 
-The Brains exchange framed serial messages encoded with Postcard and COBS plus CRC-32. Each drive node brakes if commands stop for 250 ms. Missing health replies, unsafe battery telemetry, motor faults, link errors, or a local E-stop latch the whole system off until reboot.
+A connected controller's B and L1 also work in WHEEL. Releasing WHEEL drive-enable or returning controller sticks to zero coasts while remaining armed. PARK, L1, the rider stop in CONTROLLER, or a mode change coasts and disarms. Latched faults still request electrical Brake. CONTROLLER uses signed arcade mixing: left Y drives forward/reverse and right X turns, including turning in place at zero throttle. P17 is ignored in CONTROLLER. No automatic radio fallback.
 
-## Build progress
+Master P19 connects LEFT P21; master P20 connects RIGHT P21. Each child drives bottom motors on P4/P5 and top motors on P6/P7. Top and bottom pairs use opposite motor polarity because they are gear-coupled. Master P21 is steering; P18 is radio. The master and rider controls must remain attached in both modes.
 
-- [x] Scan and model the chair and mounting bracket
-- [x] Build the eight-motor drivetrain and mount it under the seat
-- [x] Prove the drivetrain can move the chair
-- [x] Implement steering feedback and steering/throttle mixing
-- [x] Implement the three-Brain protocol, telemetry, HUD, and fail-safe behavior
-- [ ] Install and test the three-Brain electronics on the chair
-- [ ] Tune steering geometry and force feedback on hardware
-- [ ] Validate every emergency-stop path with the wheels raised
-- [ ] Add autonomous sensing and control
-
-The linked Stardance project records 23 hours across nine devlogs and was marked a Super Star project.
-
-## Progress photos
-
-| Eight-motor chassis | Fit check under chair | Mounted drivetrain |
-| --- | --- | --- |
-| ![Eight-motor drivetrain chassis](media/images/IMG_1363.webp) | ![Drivetrain below the chair](media/images/IMG_1366.webp) | ![Drivetrain mounted under chair](media/images/IMG_1365.webp) |
-
-## Reproduce it
-
-### Hardware
-
-- SitOnIt Rio 2 four-leg armless chair, or a similar chair with a rigid four-bolt seat base
-- 3 VEX V5 Brains and batteries
-- 8 VEX V5 Smart Motors with green 200 RPM cartridges
-- 4-inch drive wheels
-- 72-tooth motor gears and 48-tooth wheel gears (1.5:1 speed increase)
-- 1 additional V5 motor with a blue cartridge for steering feedback
-- 2 momentary switches for the two-button throttle interlock
-- 1 active-high emergency-stop switch and 2 legacy potentiometers for gear and speed
-- Structure, bearings, shafts, fasteners, wiring, and a printed mounting bracket
-
-The editable models, scans, bracket files, and drivetrain calculation spreadsheet are under [`hardware/`](hardware/). Start with [`Mounting Bracket.3mf`](hardware/cad/mounting-bracket/Mounting%20Bracket.3mf), then adjust the bracket and frame to fit your exact chair. Do not assume the supplied chair scan is dimensionally exact.
-
-### Port map
-
-| Brain | Port | Connection |
-| --- | --- | --- |
-| Controller | Smart 1 | Steering feedback motor |
-| Controller | Smart 2 | Serial link to left Brain smart port 2 |
-| Controller | Smart 3 | Serial link to right Brain smart port 2 |
-| Controller | ADI A + B | Two throttle switches; both must be active |
-| Left | Smart 3–6 | Four left drive motors |
-| Left | ADI C | Active-high emergency stop |
-| Left | ADI D | Reverse/park/drive potentiometer |
-| Left | ADI E | Maximum-speed potentiometer |
-| Right | Smart 3–6 | Four right drive motors |
-
-Confirm the inter-Brain serial wiring against current VEX electrical guidance before powering it. Raise all drive wheels for first tests.
-
-### Software
-
-The reproducible Nix shell includes Rust, `cargo-v5`, `rustfmt`, Clippy, and mdBook:
+## Build
 
 ```sh
 nix develop
-cargo test --workspace
-cargo v5 build --path crates/controller
-cargo v5 build --path crates/left
-cargo v5 build --path crates/right
-```
-
-Connect each Brain in turn, then upload all programs:
-
-```sh
+./check.sh
 ./upload.sh controller left right
 ```
 
-Programs use slots 1, 2, and 3 respectively. See [`docs/`](docs/) for control and safety details.
+The check includes host tests, Clippy, RustSec, all three V5 binaries, shell checks and the documentation book. Upload builds first, uses one USB Brain at a time, and does **not** start programs. Slots: master 1, left 2, right 3.
 
-## Repository map
+The pinned environment uses vexide [`403c4f9`](https://github.com/vexide/vexide/commit/403c4f92a94b88d878767ee0d778c0e689af6361), Rust `nightly-2026-09-04` and cargo-v5 0.12.1. These are the revisions verified on 2026-09-05, not a promise that future upstream HEAD stays unchanged. See [target compatibility](docs/DEVELOPMENT.md#current-rust-target-compatibility).
 
-| Path | Contents |
-| --- | --- |
-| `crates/controller/` | Driver controls, steering model, HUD, and master logic |
-| `crates/left/`, `crates/right/` | Per-side drive programs |
-| `crates/shared/` | Serial protocol, telemetry, drivetrain, and safety logic |
-| `hardware/` | CAD, scans, bracket, and drivetrain calculations |
-| `media/` | Build photos and driving demo |
-| `docs/` | Detailed hardware and software notes |
+## Dashboard preview
 
-## Safety
+![Firmware-generated HUD fixture](docs/diagrams/hud-driving.svg)
 
-This is an experimental ride-on robot, not a road vehicle. Use a physical emergency stop, current protection, guards, a clear test area, and a spotter. Test with the wheels off the ground first. Do not ride it until braking, link-loss behavior, mechanical retention, and load limits have been independently verified.
+![Controller-mode HUD fixture](docs/diagrams/hud-controller.svg)
 
-## License
+Current WHEEL and CONTROLLER UI, rendered by firmware drawing code with synthetic telemetry. WHEEL throttle comes from the P17 Rotation Sensor. [All six display states and controls](docs/HUD.md).
 
-MIT. See [`LICENSE`](LICENSE).
+## Repository
+
+- `crates/controller/`: inputs, driving state machine, steering feedback and HUD.
+- `crates/left/`, `crates/right/`: entry points for the shared drive runtime.
+- `crates/shared/`: communication, telemetry, limits and local stopping.
+- `docs/`: field guide, diagrams, commissioning and development.
+- `hardware/`: existing CAD, scans and gearing calculations.
+- `tools/diagrams.py`: reproducible documentation figures.
+
+[Earlier single-Brain driving video](media/video/driving-demo.mp4) · [Project devlogs](https://stardance.hackclub.com/projects/4170). Historical media does not validate this firmware.
+
+MIT. See [LICENSE](LICENSE).
