@@ -1,62 +1,93 @@
-use crate::link::{
-    ChildNode, LinkError, Node, NodeState, Request, Response, health::HealthResponse,
-    master::MasterNode,
+use crate::{
+    link::{
+        drivetrain::{DrivetrainNode, DrivetrainRequest, DrivetrainResponse},
+        master::MasterNode,
+        *,
+    },
+    safety::MAX_DRIVE_VOLTS,
 };
+use std::time::Instant;
 
-#[derive(Debug, Clone, Copy)]
-
-pub struct ChildPollReport<R> {
-    pub estopped: bool,
-    pub request: Option<R>,
+#[derive(Default)]
+pub struct ChildPollReport {
+    pub request: Option<DrivetrainRequest>,
 }
-
-impl<R> Default for ChildPollReport<R> {
-    fn default() -> Self {
-        Self {
-            estopped: false,
-            request: None,
-        }
+impl Node<DrivetrainNode, MasterNode> {
+    fn send_response(&mut self, response: Response<DrivetrainResponse>) -> Result<(), LinkError> {
+        self.send(&WirePacket::<DrivetrainRequest, DrivetrainResponse>::Response(response))
     }
-}
 
-impl<Local: ChildNode> Node<Local, MasterNode> {
     pub fn service(
         &mut self,
-        mut collect_health: impl FnMut() -> HealthResponse,
-    ) -> Result<ChildPollReport<Local::Request>, LinkError> {
+        now: Instant,
+        mut health: HealthResponse,
+    ) -> Result<ChildPollReport, LinkError> {
+        self.lease.expired(now);
         let mut report = ChildPollReport::default();
-        while let Some(request) = self.read_packet::<Request<Local::Request>>()? {
+        let mut budget = RX_BUDGET;
+        for _ in 0..MAX_PACKETS_PER_POLL {
+            let Some(packet) =
+                self.read_packet::<WirePacket<DrivetrainRequest, DrivetrainResponse>>(&mut budget)?
+            else {
+                return Ok(report);
+            };
+            let WirePacket::Request(request) = packet else {
+                // V5 generic serial may place the local TX frame in RX.
+                continue;
+            };
             match request {
-                Request::Syn => {
-                    self.send(&Response::<Local::Response>::Ack { node: Local::KIND })?;
+                Request::Syn(assignment) => {
+                    self.lease.assign(assignment, now)?;
+                    self.send_response(Response::<DrivetrainResponse>::Ack {
+                        node: NodeKind::Drivetrain,
+                        assignment,
+                    })?;
                     self.state = NodeState::Connected;
                 }
-                Request::Health { sequence } => {
-                    let health = collect_health();
-                    self.send(&Response::<Local::Response>::Health { sequence, health })?;
-                }
-                Request::Node(request) => {
-                    if !self.estopped {
-                        report.request = Some(request);
+                Request::Health { session, sequence } => {
+                    if self.lease.assignment.is_none_or(|a| a.session != session) {
+                        return Err(LinkError::Protocol);
                     }
+                    if self.lease.sequence.is_none() {
+                        // Master must activate both links with zero before requesting telemetry.
+                        // Ignore an early/stale request without starting hardware health work.
+                        continue;
+                    }
+                    health.battery = crate::link::health::BatteryHealth::collect();
+                    health.stopped = self.lease.stopped;
+                    health.last_command = self.lease.sequence;
+                    self.send_response(Response::<DrivetrainResponse>::Health {
+                        session,
+                        sequence,
+                        health,
+                    })?;
                 }
-                Request::EmergencyStop => {
-                    self.estopped = true;
+                Request::Node {
+                    session,
+                    sequence,
+                    request,
+                } => {
+                    let DrivetrainRequest::SetVoltage { millivolts } = request;
+                    if !(-((MAX_DRIVE_VOLTS * 1000.0) as i16)..=(MAX_DRIVE_VOLTS * 1000.0) as i16)
+                        .contains(&millivolts)
+                    {
+                        return Err(LinkError::Protocol);
+                    }
+                    self.lease.accept(session, sequence, millivolts == 0, now)?;
+                    report.request = Some(request);
+                }
+                Request::EmergencyStop(reason) => {
+                    self.lease.stop(reason);
                     report.request = None;
-                    report.estopped = true;
                 }
             }
         }
-        Ok(report)
+        Err(LinkError::Backlog)
     }
-
-    pub fn respond(&mut self, response: Local::Response) -> Result<(), LinkError> {
-        if self.estopped {
-            return Err(LinkError::EmergencyStopped);
-        }
-        if !self.is_connected() {
-            return Err(LinkError::NotConnected);
-        }
-        self.send(&Response::Node(response))
+    pub fn stop(&mut self, reason: StopReason) {
+        self.lease.stop(reason);
+    }
+    pub fn fault(&self) -> Option<StopReason> {
+        self.lease.stopped
     }
 }

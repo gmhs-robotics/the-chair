@@ -1,64 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-labelledby="title desc">
-  <title id="title">Left and right drive node layout</title>
-  <desc id="desc">Two drive Brains, each controlling four motors on one side and exchanging voltage, health, speed, and emergency-stop messages.</desc>
-  <defs>
-    <style>
-      .bg { fill: #050505; }
-      .line { fill: none; stroke: #d8d8d0; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-      .thin { fill: none; stroke: #d8d8d0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-      .accent { fill: none; stroke: #ff7479; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-      .green { fill: none; stroke: #40d681; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-      .text { fill: #ff7479; font: 700 30px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
-      .small { fill: #d8d8d0; font: 700 20px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
-      .tiny { fill: #d8d8d0; font: 700 16px "Comic Sans MS", "Comic Neue", cursive, sans-serif; }
-    </style>
-  </defs>
-  <rect class="bg" width="1100" height="560"/>
-
-  <!-- Left node brain -->
-  <path class="line" d="M91 119 L337 119 L414 164 L414 345 L121 345 L64 307 L64 154 Z"/>
-  <path class="thin" d="M91 119 L121 154 L414 164 M121 154 L121 345"/>
-  <text class="text" x="148" y="201">Left Drive Brain</text>
-  <text class="small" x="150" y="238">slot 2 / chair-left</text>
-  <text class="small" x="150" y="274">smart ports 3–6</text>
-
-  <!-- Right node brain -->
-  <path class="line" d="M686 119 L932 119 L1009 164 L1009 345 L716 345 L659 307 L659 154 Z"/>
-  <path class="thin" d="M686 119 L716 154 L1009 164 M716 154 L716 345"/>
-  <text class="text" x="740" y="201">Right Drive Brain</text>
-  <text class="small" x="742" y="238">slot 3 / chair-right</text>
-  <text class="small" x="742" y="274">smart ports 3–6</text>
-
-  <!-- Left motors -->
-  <g transform="translate(119 414)">
-    <circle class="line" cx="0" cy="0" r="31"/><circle class="line" cx="92" cy="0" r="31"/>
-    <circle class="line" cx="184" cy="0" r="31"/><circle class="line" cx="276" cy="0" r="31"/>
-    <path class="thin" d="M0 -31 L0 -66 M92 -31 L92 -66 M184 -31 L184 -66 M276 -31 L276 -66"/>
-    <text class="small" x="24" y="70">four left-side motors</text>
-  </g>
-
-  <!-- Right motors -->
-  <g transform="translate(714 414)">
-    <circle class="line" cx="0" cy="0" r="31"/><circle class="line" cx="92" cy="0" r="31"/>
-    <circle class="line" cx="184" cy="0" r="31"/><circle class="line" cx="276" cy="0" r="31"/>
-    <path class="thin" d="M0 -31 L0 -66 M92 -31 L92 -66 M184 -31 L184 -66 M276 -31 L276 -66"/>
-    <text class="small" x="18" y="70">four right-side motors</text>
-  </g>
-
-  <!-- Commands from controller -->
-  <path class="green" d="M515 154 C468 147 440 148 414 164"/>
-  <path class="green" d="M586 154 C622 147 642 148 659 164"/>
-  <path class="accent" d="M455 143 L414 164 L458 176"/>
-  <path class="accent" d="M623 142 L659 164 L621 178"/>
-  <text class="text" x="467" y="103">Controller commands</text>
-  <text class="tiny" x="458" y="207">voltage</text>
-  <text class="tiny" x="458" y="232">health + RPM</text>
-  <text class="tiny" x="458" y="257">E-stop</text>
-  <text class="tiny" x="458" y="282">CRC + timeout</text>
-  <rect class="accent" x="440" y="182" width="205" height="122" rx="5"/>
-
-  <!-- Safety note -->
-  <path class="accent" d="M536 332 C492 356 487 398 522 425 C558 453 612 438 624 395 C633 360 589 324 536 332 Z"/>
-  <text class="text" x="517" y="391">E-stop</text>
-  <text class="small" x="392" y="514">any node fault should force both drive sides safe</text>
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1080' viewBox='0 0 1200 1080' role='img' aria-labelledby='title desc'>
+<title id='title'>Drive-node command lifecycle</title><desc id='desc'>Link first, then recoverable motor discovery. First zero starts the 150 ms command lease.</desc>
+<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
+<rect width='1200' height='1080' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   04</text>
+<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>Drive-node command lifecycle</text>
+<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Link first, then recoverable motor discovery. First zero starts the 150 ms command lease.</text>
+<rect x='40' y='170' width='510' height='155' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='186' width='5' height='123' rx='2' fill='#087f72'/>
+<text x='62' y='200' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>BOOT</text>
+<text x='62' y='230' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Open P21; block motor output</text>
+<text x='62' y='261' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Do no Smart Motor polling before handshake.</text>
+<text x='62' y='288' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Startup motor WAIT never latches a fault.</text>
+<rect x='650' y='170' width='510' height='155' rx='12' fill='white' stroke='#cbd7e0'/><rect x='650' y='186' width='5' height='123' rx='2' fill='#086baf'/>
+<text x='672' y='200' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>ASSIGN</text>
+<text x='672' y='230' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Wait for master on P21</text>
+<text x='672' y='261' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Accept protocol v3, side and session.</text>
+<text x='672' y='288' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Initialization health grants no motion authority.</text>
+<polyline points='550,246 650,246' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='650' y='410' width='510' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='650' y='426' width='5' height='148' rx='2' fill='#086baf'/>
+<text x='672' y='440' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>FIRST COMMAND</text>
+<text x='672' y='470' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Accept zero; start lease</text>
+<text x='672' y='501' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Lost ACK may be retried before first zero.</text>
+<text x='672' y='528' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Every later sequence must advance.</text>
+<text x='672' y='555' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Duplicate SYN cannot renew an active lease.</text>
+<polyline points='905,325 905,410' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='40' y='410' width='510' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='426' width='5' height='148' rx='2' fill='#087f72'/>
+<text x='62' y='440' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>DISCOVER / RUN</text>
+<text x='62' y='470' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Discover, then supervise</text>
+<text x='62' y='501' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Probe one motor per iteration; wait for 4 stable.</text>
+<text x='62' y='528' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>After ready, check motor, battery, loop and duty.</text>
+<text x='62' y='555' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Apply bounded ramp or normal Coast.</text>
+<polyline points='650,493 550,493' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='40,493 20,493 20,375 295,375 295,410' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='70' y='366' font-family='DejaVu Sans, sans-serif' font-size='14' font-weight='700' fill='#087f72'>REPEAT WHILE HEALTHY</text>
+<polyline points='295,590 295,660 600,660 600,710' fill='none' stroke='#b32d45' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='905,590 905,660 600,660' fill='none' stroke='#b32d45' stroke-width='3' stroke-linejoin='round' />
+<text x='478' y='643' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='700' fill='#b32d45'>ANY DETECTED FAULT</text>
+<rect x='230' y='710' width='740' height='175' rx='12' fill='white' stroke='#cbd7e0'/><rect x='230' y='726' width='5' height='143' rx='2' fill='#b32d45'/>
+<text x='252' y='740' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>LATCHED STOP</text>
+<text x='252' y='770' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Brake now; keep reporting health</text>
+<text x='252' y='801' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Retry local Brake every nominal 10 ms.</text>
+<text x='252' y='828' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>No command, reconnect or cooling clears the latch.</text>
+<text x='252' y='855' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Repair, then restart all three programs.</text>
+<rect x='40' y='925' width='1120' height='87' rx='10' fill='#e9eff4'/>
+<text x='60' y='954' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#865900'>LOCAL PROTECTION HAS A HARDWARE LIMIT</text>
+<text x='60' y='982' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>A frozen CPU, failed SDK or lost supply may prevent braking. Software is not an independent power cut.</text>
+<text x='40' y='1058' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
+<text x='850' y='1058' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
 </svg>

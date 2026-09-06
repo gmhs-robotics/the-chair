@@ -1,0 +1,47 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='900' viewBox='0 0 1200 900' role='img' aria-labelledby='title desc'>
+<title id='title'>Three ways to stop</title><desc id='desc'>Normal stops Coast; a fault Brake request is not a mechanical holding brake.</desc>
+<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
+<rect width='1200' height='900' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   05</text>
+<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>Three ways to stop</text>
+<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Normal stops Coast; a fault Brake request is not a mechanical holding brake.</text>
+<rect x='40' y='180' width='340' height='245' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='196' width='5' height='213' rx='2' fill='#086baf'/>
+<text x='62' y='210' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>NORMAL STOP</text>
+<text x='62' y='240' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Coast + disarm</text>
+<text x='62' y='271' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Release drive enable.</text>
+<text x='62' y='298' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Or PARK / controller L1.</text>
+<text x='62' y='325' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Rider left: controller coast.</text>
+<text x='62' y='352' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Return neutral; ARM again.</text>
+<rect x='430' y='180' width='340' height='245' rx='12' fill='white' stroke='#cbd7e0'/><rect x='430' y='196' width='5' height='213' rx='2' fill='#b32d45'/>
+<text x='452' y='210' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>SOFTWARE E-STOP</text>
+<text x='452' y='240' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Latched Brake</text>
+<text x='452' y='271' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Rider right / controller B.</text>
+<text x='452' y='298' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Also detected system faults.</text>
+<text x='452' y='325' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Release does not reset.</text>
+<text x='452' y='352' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Repair; restart all programs.</text>
+<rect x='820' y='180' width='340' height='245' rx='12' fill='white' stroke='#cbd7e0'/><rect x='820' y='196' width='5' height='213' rx='2' fill='#865900'/>
+<text x='842' y='210' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#865900'>INDEPENDENT STOP</text>
+<text x='842' y='240' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Remove drive power</text>
+<text x='842' y='271' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Requires reviewed hardware.</text>
+<text x='842' y='298' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Must cover every power path.</text>
+<text x='842' y='325' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Braking changes unpowered.</text>
+<text x='842' y='352' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Prove stopping and holding.</text>
+<text x='40' y='480' font-family='DejaVu Sans, sans-serif' font-size='25' font-weight='700' fill='#142b3c'>Automatic software trips</text>
+<rect x='40' y='510' width='535' height='155' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='526' width='5' height='123' rx='2' fill='#b32d45'/>
+<text x='62' y='540' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>MASTER</text>
+<text x='62' y='570' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Stop both sides</text>
+<text x='62' y='601' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Rider / radio / steering / input faults.</text>
+<text x='62' y='628' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Lost health replies or stalled control loop.</text>
+<rect x='625' y='510' width='535' height='155' rx='12' fill='white' stroke='#cbd7e0'/><rect x='625' y='526' width='5' height='123' rx='2' fill='#b32d45'/>
+<text x='647' y='540' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>EACH CHILD</text>
+<text x='647' y='570' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Stop its own motors</text>
+<text x='647' y='601' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Command lease / invalid packet / local faults.</text>
+<text x='647' y='628' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Heat, speed, battery and duty supervision.</text>
+<rect x='40' y='710' width='1120' height='141' rx='10' fill='#e9eff4'/>
+<text x='60' y='739' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#865900'>OCCUPIED OPERATION HAS NOT BEEN VALIDATED</text>
+<text x='60' y='767' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Commands: 40 ms; lease: 150 ms. Health: 100 ms requests + 500 ms reply deadline.</text>
+<text x='60' y='794' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Detection and braking take time. Measure delay and loaded stopping distance on the final chair.</text>
+<text x='60' y='821' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>An open rider-button wire or failed drive CPU can defeat software protection.</text>
+<text x='40' y='878' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
+<text x='850' y='878' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
+</svg>

@@ -10,14 +10,16 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+repository = "https://github.com/gmhs-robotics/the-chair"
 
 [workspace.dependencies]
 chair-shared = { path = "crates/shared" }
-vexide = { version = "0.8.0", features = ["full", "default-sdk"] }
+vexide = { git = "https://github.com/vexide/vexide", rev = "403c4f92a94b88d878767ee0d778c0e689af6361", features = ["full", "default-sdk"] }
 thiserror = { version = "2.0.18" }
 serde = { version = "1.0", features = ["derive"] }
-postcard = { version = "1.1.3", features = ["experimental-derive", "use-std"] }
-cobs = "0.3.0"
+postcard = { version = "1.1.3", default-features = false, features = ["experimental-derive", "use-std"] }
+cobs = "0.5.1"
 
 [profile.release]
 opt-level = "z"

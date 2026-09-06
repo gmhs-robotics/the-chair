@@ -1,0 +1,50 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1080' viewBox='0 0 1200 1080' role='img' aria-labelledby='title desc'>
+<title id='title'>From rider input to motor voltage</title><desc id='desc'>Control flow, not electrical wiring. Positive steering requests a right turn.</desc>
+<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
+<rect width='1200' height='1080' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   06</text>
+<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>From rider input to motor voltage</text>
+<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Control flow, not electrical wiring. Positive steering requests a right turn.</text>
+<rect x='40' y='165' width='520' height='170' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='181' width='5' height='138' rx='2' fill='#086baf'/>
+<text x='62' y='195' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>WHEEL INPUT</text>
+<text x='62' y='225' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>P17 throttle + physical wheel</text>
+<text x='62' y='256' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Rotation Sensor: signed direction; ADI A: enable.</text>
+<text x='62' y='283' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P21 encoder: measured steering position.</text>
+<text x='62' y='310' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>ADI B: latched E-stop in either mode.</text>
+<rect x='640' y='165' width='520' height='170' rx='12' fill='white' stroke='#cbd7e0'/><rect x='640' y='181' width='5' height='138' rx='2' fill='#086baf'/>
+<text x='662' y='195' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>CONTROLLER INPUT</text>
+<text x='662' y='225' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Radio on master P18</text>
+<text x='662' y='256' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Left Y up: throttle; right X: steering.</text>
+<text x='662' y='283' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>A: arm once; sticks drive; L1: coast.</text>
+<text x='662' y='310' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>B: E-stop; X: mode; no automatic fallback.</text>
+<polyline points='300,335 300,375 600,375 600,415' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='900,335 900,375 600,375' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' />
+<rect x='230' y='415' width='740' height='170' rx='12' fill='white' stroke='#cbd7e0'/><rect x='230' y='431' width='5' height='138' rx='2' fill='#086baf'/>
+<text x='252' y='445' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>MASTER / control.rs</text>
+<text x='252' y='475' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Select mode and enforce arming</text>
+<text x='252' y='506' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Healthy + stopped + cool + centered; neutral for 500 ms.</text>
+<text x='252' y='533' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Only the selected mode supplies throttle and steering.</text>
+<text x='252' y='560' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Rider stops and connected-controller B / L1 remain active.</text>
+<polyline points='600,585 600,605 307,605 307,625' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='40' y='625' width='535' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='641' width='5' height='148' rx='2' fill='#087f72'/>
+<text x='62' y='655' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>MASTER / MIX + SPEED CONTROL</text>
+<text x='62' y='685' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Signed LEFT / RIGHT targets</text>
+<text x='62' y='716' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>throttle × (1 + steer), throttle × (1 − steer)</text>
+<text x='62' y='743' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Desaturate; each target magnitude ≤45 RPM.</text>
+<text x='62' y='770' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Feed-forward + RPM error; ramp and cap at ±4 V.</text>
+<rect x='625' y='625' width='535' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='625' y='641' width='5' height='148' rx='2' fill='#087f72'/>
+<text x='647' y='655' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>CHILD / LOCAL SUPERVISION</text>
+<text x='647' y='685' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Validate, ramp, drive P4–P7</text>
+<text x='647' y='716' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Receive voltage, not RPM, over the Smart Cable.</text>
+<text x='647' y='743' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Check lease, health, duty; own ±4 V ramp.</text>
+<text x='647' y='770' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Zero commands request immediate Coast.</text>
+<polyline points='575,715 625,715' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='40' y='850' width='1120' height='141' rx='10' fill='#e9eff4'/>
+<text x='60' y='879' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#086baf'>STEERING FEEDBACK AND DASHBOARD</text>
+<text x='60' y='907' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Master P21 provides a limited spring/damper in WHEEL; follows steering target in CONTROLLER.</text>
+<text x='60' y='934' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Disarming removes powered steering feedback. Zero throttle while armed retains it.</text>
+<text x='60' y='961' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>HUD shows measured wheel position and P17 throttle input, even when CONTROLLER drives.</text>
+<text x='40' y='1018' font-family='DejaVu Sans, sans-serif' font-size='14' font-weight='400' fill='#536879'>Sources: controller/{main,control,steering,hud}.rs • shared/link/drivetrain.rs</text>
+<text x='40' y='1058' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
+<text x='850' y='1058' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
+</svg>

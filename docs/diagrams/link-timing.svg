@@ -1,0 +1,44 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1130' viewBox='0 0 1200 1130' role='img' aria-labelledby='title desc'>
+<title id='title'>Two independent communication deadlines</title><desc id='desc'>Example exchange for one child. Command and health traffic interleave; spacing is not elapsed time.</desc>
+<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
+<rect width='1200' height='1130' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   07</text>
+<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>Two independent communication deadlines</text>
+<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Example exchange for one child. Command and health traffic interleave; spacing is not elapsed time.</text>
+<text x='120' y='180' font-family='DejaVu Sans, sans-serif' font-size='20' font-weight='700' fill='#086baf'>MASTER P19 / P20</text>
+<text x='790' y='180' font-family='DejaVu Sans, sans-serif' font-size='20' font-weight='700' fill='#087f72'>CHILD P21</text>
+<polyline points='260,205 260,735' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' />
+<polyline points='930,205 930,735' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' />
+<text x='290' y='233' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>SYN: protocol v3 + side + session</text>
+<polyline points='260,245 930,245' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='293' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#087f72'>ACK: drivetrain identity + same assignment</text>
+<polyline points='930,305 260,305' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='373' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>Health request: session + sequence; starts reply deadline</text>
+<polyline points='260,385 930,385' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='443' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>First accepted SetVoltage(0): starts command lease</text>
+<polyline points='260,455 930,455' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='543' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#087f72'>Health reply: matching session + pending sequence</text>
+<polyline points='930,555 260,555' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='613' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>SetVoltage: session + advancing sequence; renews lease</text>
+<polyline points='260,625 930,625' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<text x='290' y='705' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='700' fill='#b32d45'>Health traffic does not renew the child&#x27;s command lease.</text>
+<text x='290' y='733' font-family='DejaVu Sans, sans-serif' font-size='14' font-weight='400' fill='#536879'>Readiness waits for health reporting an accepted command.</text>
+<rect x='40' y='770' width='535' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='786' width='5' height='148' rx='2' fill='#b32d45'/>
+<text x='62' y='800' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>CHILD COMMAND LEASE</text>
+<text x='62' y='830' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>150 ms since accepted command</text>
+<text x='62' y='861' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>First command must be zero; then keep sending.</text>
+<text x='62' y='888' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Check expiry before reading buffered packets.</text>
+<text x='62' y='915' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Expiry latches; local Brake is retried.</text>
+<rect x='625' y='770' width='535' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='625' y='786' width='5' height='148' rx='2' fill='#b32d45'/>
+<text x='647' y='800' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#b32d45'>MASTER HEALTH DEADLINE</text>
+<text x='647' y='830' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>500 ms from pending request</text>
+<text x='647' y='861' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Request/retry interval: 100 ms; one sequence per link.</text>
+<text x='647' y='888' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Check deadline before reading queued replies.</text>
+<text x='647' y='915' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Timeout latches; retry stops to both children.</text>
+<rect x='40' y='975' width='1120' height='114' rx='10' fill='#e9eff4'/>
+<text x='60' y='1004' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#865900'>DEADLINES ARE NOT STOPPING-DISTANCE GUARANTEES</text>
+<text x='60' y='1032' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Nominal loop: 10 ms; a &gt;100 ms loop gap trips when execution resumes.</text>
+<text x='60' y='1059' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Sources: shared/link/{master,child}.rs, shared/link.rs, shared/safety.rs.</text>
+<text x='40' y='1108' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
+<text x='850' y='1108' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
+</svg>

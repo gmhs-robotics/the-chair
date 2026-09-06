@@ -1,0 +1,54 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1040' viewBox='0 0 1200 1040' role='img' aria-labelledby='title desc'>
+<title id='title'>From parked to driving</title><desc id='desc'>Boot defaults to WHEEL. Changing modes never transfers a live throttle request.</desc>
+<defs><marker id='arrow' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0 L10 5 L0 10z' fill='context-stroke'/></marker></defs>
+<rect width='1200' height='1040' fill='#f4f7fa'/><rect width='1200' height='8' fill='#086baf'/>
+<text x='40' y='44' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>THE CHAIR   /   FIELD GUIDE   /   03</text>
+<text x='40' y='88' font-family='DejaVu Sans, sans-serif' font-size='32' font-weight='700' fill='#142b3c'>From parked to driving</text>
+<text x='40' y='120' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Boot defaults to WHEEL. Changing modes never transfers a live throttle request.</text>
+<rect x='40' y='170' width='340' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='186' width='5' height='148' rx='2' fill='#086baf'/>
+<text x='62' y='200' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>01 / START</text>
+<text x='62' y='230' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Master first</text>
+<text x='62' y='261' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Start children manually.</text>
+<text x='62' y='288' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Wait for healthy LEFT + RIGHT.</text>
+<text x='62' y='315' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Center wheel; tap CENTER.</text>
+<rect x='430' y='170' width='340' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='430' y='186' width='5' height='148' rx='2' fill='#086baf'/>
+<text x='452' y='200' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>02 / PREPARE</text>
+<text x='452' y='230' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Neutral for 500 ms</text>
+<text x='452' y='261' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P17 zero; sticks centered.</text>
+<text x='452' y='288' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Release enable and brake.</text>
+<text x='452' y='315' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Wheel near calibrated center.</text>
+<rect x='820' y='170' width='340' height='180' rx='12' fill='white' stroke='#cbd7e0'/><rect x='820' y='186' width='5' height='148' rx='2' fill='#086baf'/>
+<text x='842' y='200' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>03 / ARM</text>
+<text x='842' y='230' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Tap ARM or press A</text>
+<text x='842' y='261' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Both nodes healthy and cool.</text>
+<text x='842' y='288' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>CONTROLLER needs radio.</text>
+<text x='842' y='315' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Then press drive enable.</text>
+<polyline points='380,258 430,258' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='770,258 820,258' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='990,350 990,400 300,400 300,440' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<polyline points='990,400 900,400 900,440' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
+<rect x='40' y='440' width='520' height='220' rx='12' fill='white' stroke='#cbd7e0'/><rect x='40' y='456' width='5' height='188' rx='2' fill='#087f72'/>
+<text x='62' y='470' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>WHEEL</text>
+<text x='62' y='500' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Hold left; rotate P17 throttle</text>
+<text x='62' y='531' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Positive forward; negative reverse.</text>
+<text x='62' y='558' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Release left button: immediate coast.</text>
+<text x='62' y='585' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>ARMED remains; hold again to resume.</text>
+<text x='62' y='612' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Use PARK to disarm.</text>
+<rect x='640' y='440' width='520' height='220' rx='12' fill='white' stroke='#cbd7e0'/><rect x='640' y='456' width='5' height='188' rx='2' fill='#087f72'/>
+<text x='662' y='470' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#087f72'>CONTROLLER</text>
+<text x='662' y='500' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Press A once; use both sticks</text>
+<text x='662' y='531' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Left Y drives ±; right X turns or pivots.</text>
+<text x='662' y='558' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Left Y: forward/reverse. Right X: turn/pivot.</text>
+<text x='662' y='585' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Center sticks: coast; remains armed.</text>
+<text x='662' y='612' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>L1 or rider left: coast + disarm.</text>
+<rect x='40' y='704' width='1120' height='114' rx='10' fill='#e9eff4'/>
+<text x='60' y='733' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#086baf'>AFTER A NORMAL STOP</text>
+<text x='60' y='761' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Return controls to neutral, stop, release buttons, then ARM again.</text>
+<text x='60' y='788' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>MODE / X while armed parks first. Once stopped and neutral, select the mode again.</text>
+<rect x='40' y='844' width='1120' height='114' rx='10' fill='#e9eff4'/>
+<text x='60' y='873' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='700' fill='#b32d45'>RIDER RIGHT BUTTON OR CONTROLLER B: LATCHED E-STOP</text>
+<text x='60' y='901' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Release cannot resume motion. Repair the cause and restart all three programs.</text>
+<text x='60' y='928' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#536879'>Radio loss in CONTROLLER also latches; there is no automatic WHEEL fallback.</text>
+<text x='40' y='1018' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='700' fill='#536879'>SCHEMATIC • NOT TO SCALE</text>
+<text x='850' y='1018' font-family='DejaVu Sans, sans-serif' font-size='12' font-weight='400' fill='#536879'>V5 / THREE-BRAIN CONFIGURATION</text>
+</svg>
