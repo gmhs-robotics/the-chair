@@ -14,7 +14,7 @@ for project in "$@"; do
   echo "Connect ONLY the $project Brain (slot $slot). Motors must be unloaded."
   until lsusb -d 2888:0501 >/dev/null 2>&1; do sleep 1; done
   cargo v5 upload --path "crates/$project" \
-    --file "$PWD/target/thumbv7a-vex-v5-chair/release/chair-$project" \
+    --file "$PWD/target/armv7a-vex-v5/release/chair-$project" \
     --name "chair-$project" --slot "$slot" --after none
   first=false
 done

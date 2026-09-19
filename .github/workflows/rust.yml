@@ -14,13 +14,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
         with:
-          # Keep aligned with rust-toolchain.toml and the checked-in V5 target.
-          toolchain: nightly-2026-09-04
+          # Keep aligned with rust-toolchain.toml.
+          toolchain: nightly-2026-03-07
           components: rust-src,rustfmt,clippy
-      - name: Verify generated target definition
-        run: |
-          python3 tools/update-target.py
-          git diff --exit-code -- .cargo/thumbv7a-vex-v5-chair.json
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Run host tests
@@ -28,6 +24,6 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Link all V5 firmware
-        run: cargo firmware --locked
+        run: ./build.sh
       - name: Check shell syntax
         run: bash -n build.sh check.sh render-hud.sh upload.sh
