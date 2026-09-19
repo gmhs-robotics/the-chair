@@ -6,7 +6,7 @@
 <text x='372' y='70' font-family='DejaVu Sans, sans-serif' font-size='13' font-weight='700' fill='#086baf'>MASTER / SLOT 1</text>
 <text x='372' y='100' font-family='DejaVu Sans, sans-serif' font-size='23' font-weight='700' fill='#142b3c'>Reads controls and commands both sides</text>
 <text x='372' y='131' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P17 throttle • P21 steering • optional radio</text>
-<text x='372' y='158' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Runs HUD, arming, drive mixing and system safety</text>
+<text x='372' y='158' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>Runs HUD, readiness, drive mixing and system safety</text>
 <text x='372' y='185' font-family='DejaVu Sans, sans-serif' font-size='17' font-weight='400' fill='#536879'>P19 sends LEFT • P20 sends RIGHT</text>
 <polyline points='475,235 475,300 295,300 295,350' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
 <polyline points='725,235 725,300 905,300 905,350' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>

@@ -1,5 +1,5 @@
 use crate::geometry::*;
-use chair_shared::safety::{MOTOR_RESTART_C, MOTOR_STOP_C, StopReason};
+use chair_shared::safety::{MAX_DRIVE_VOLTS, StopReason, thermal_voltage_limit};
 use std::time::Duration;
 use vexide::{
     math::Angle,
@@ -18,7 +18,8 @@ const MAX_FEEDBACK_SLEW_VOLTS_PER_SECOND: f64 = 12.0;
 const MAX_CONSECUTIVE_INVALID_SAMPLES: u8 = 5;
 const NONFATAL_STEERING_WARNINGS: u32 = MotorFaults::DRIVER_FAULT.bits()
     | MotorFaults::OVER_CURRENT.bits()
-    | MotorFaults::DRIVER_OVER_CURRENT.bits();
+    | MotorFaults::DRIVER_OVER_CURRENT.bits()
+    | MotorFaults::OVER_TEMPERATURE.bits();
 
 const fn fatal_steering_faults(faults: u32) -> u32 {
     faults & !NONFATAL_STEERING_WARNINGS
@@ -151,15 +152,6 @@ impl SteeringWheel {
                 return self.defer_invalid_sample("faults");
             }
         };
-        if temperature >= f64::from(MOTOR_STOP_C) || faults.contains(MotorFaults::OVER_TEMPERATURE)
-        {
-            self.sample_valid = false;
-            println!(
-                "[STEERING] SAMPLE FAULT over_temperature temp_c={temperature:.2} stop_c={MOTOR_STOP_C:.2} faults=0x{:08X}",
-                faults.bits(),
-            );
-            return Err(StopReason::MotorHot);
-        }
         // Current/driver warnings can appear when the deliberately low steering current limit
         // engages. Retain every bit in telemetry; VEXos enforces the configured hardware limit.
         let fatal_faults = fatal_steering_faults(faults.bits());
@@ -228,12 +220,9 @@ impl SteeringWheel {
     }
     pub fn calibrate(&mut self) -> Result<bool, StopReason> {
         self.stop()?;
-        if !self.sample_valid
-            || self.state.speed.abs() > 5.0
-            || self.state.temperature > f64::from(MOTOR_RESTART_C)
-        {
+        if !self.sample_valid || self.state.speed.abs() > 5.0 {
             println!(
-                "[STEERING] CALIBRATION BLOCKED sample_valid={} angle_deg={:.2} speed_deg_s={:.2} temp_c={:.2} max_speed_deg_s=5.00 restart_c={MOTOR_RESTART_C:.2}",
+                "[STEERING] CALIBRATION BLOCKED sample_valid={} angle_deg={:.2} speed_deg_s={:.2} temp_c={:.2} max_speed_deg_s=5.00",
                 self.sample_valid, self.state.angle, self.state.speed, self.state.temperature,
             );
             return Ok(false);
@@ -264,7 +253,21 @@ impl SteeringWheel {
         let target = remote_target.unwrap_or(0.0).clamp(-1.0, 1.0) * MAX_STEERING_DEG;
         let voltage = self
             .feedback
-            .update(self.state.angle, self.state.speed, target, dt);
+            .update(self.state.angle, self.state.speed, target, dt)
+            .clamp(
+                -MAX_FEEDBACK_VOLTS
+                    * thermal_voltage_limit(
+                        self.state.temperature as f32,
+                        self.state.faults & MotorFaults::OVER_TEMPERATURE.bits() != 0,
+                    )
+                    / MAX_DRIVE_VOLTS,
+                MAX_FEEDBACK_VOLTS
+                    * thermal_voltage_limit(
+                        self.state.temperature as f32,
+                        self.state.faults & MotorFaults::OVER_TEMPERATURE.bits() != 0,
+                    )
+                    / MAX_DRIVE_VOLTS,
+            );
         self.state.target_angle = self.feedback.target;
         self.state.command_voltage = voltage;
         self.motor.set_voltage(voltage).map_err(|error| {
@@ -341,7 +344,7 @@ mod tests {
             0
         );
         assert_eq!(fatal_steering_faults(NONFATAL_STEERING_WARNINGS), 0);
-        assert_ne!(
+        assert_eq!(
             fatal_steering_faults(MotorFaults::OVER_TEMPERATURE.bits()),
             0
         );

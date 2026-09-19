@@ -22,13 +22,8 @@ pub struct RemoteInput {
     pub connected: bool,
     pub throttle: f64,
     pub steer: f64,
-    /// Current R1 level retained for diagnostics; controller driving needs no enable hold.
-    pub enable: bool,
     pub brake: bool,
-    pub estop: bool,
-    pub arm: bool,
-    /// Current A-button level retained for diagnostics; only A's rising edge arms.
-    pub arm_held: bool,
+    pub brake_b: bool,
     pub switch_mode: bool,
 }
 #[derive(Default, Clone, Copy)]
@@ -38,22 +33,17 @@ pub struct Input {
     pub steer: f64,
     pub calibrated: bool,
     pub ready: bool,
-    pub cool: bool,
+    pub battery_cool: bool,
     pub stopped: bool,
     pub side_rpm: [f64; 2],
-    pub arm: bool,
     pub switch_mode: bool,
-    pub park: bool,
     pub driver_enabled: bool,
 }
 #[derive(Debug, Clone, Copy)]
 enum RunState {
-    /// No motion authority. Wait for healthy nodes and released stop inputs.
-    Startup,
-    Parked {
-        neutral_since: Option<Instant>,
-    },
-    Armed,
+    /// No motion authority until links, calibration and neutral inputs are ready.
+    WaitingForReady,
+    Active,
     Fault(StopReason),
 }
 pub struct Control {
@@ -62,6 +52,9 @@ pub struct Control {
     pub steer: f64,
     pub throttle: f64,
     pub duty: DutyBudget,
+    pub braking: bool,
+    neutral_since: Option<Instant>,
+    resume_neutral: bool,
     state: RunState,
 }
 impl Default for Control {
@@ -72,13 +65,22 @@ impl Default for Control {
             steer: 0.0,
             throttle: 0.0,
             duty: DutyBudget::default(),
-            state: RunState::Startup,
+            braking: false,
+            neutral_since: None,
+            resume_neutral: false,
+            state: RunState::WaitingForReady,
         }
     }
 }
 impl Control {
-    pub const fn armed(&self) -> bool {
-        matches!(self.state, RunState::Armed)
+    pub const fn active(&self) -> bool {
+        matches!(self.state, RunState::Active)
+    }
+    pub const fn steering_enabled(&self) -> bool {
+        self.active() && !self.braking && !self.resume_neutral
+    }
+    pub const fn waiting_neutral(&self) -> bool {
+        self.active() && self.resume_neutral
     }
     pub const fn fault(&self) -> Option<StopReason> {
         match self.state {
@@ -97,25 +99,25 @@ impl Control {
         self.throttle = 0.0;
         self.steer = 0.0;
     }
-    fn park(&mut self) {
-        self.state = RunState::Parked {
-            neutral_since: None,
-        };
+    pub fn hold_until_neutral(&mut self) {
+        self.resume_neutral = true;
+        self.neutral_since = None;
         self.zero_outputs();
     }
     pub fn neutral(mode: Mode, input: &Input) -> bool {
-        // P17 is not a control source in CONTROLLER mode, so its parked position must not
-        // silently prevent controller arming. The two rider buttons remain authoritative.
+        // P17 is not a control source in CONTROLLER mode, so its position must not
+        // silently prevent controller activation. The two rider buttons remain authoritative.
         (mode == Mode::Controller || input.wheel.throttle == 0.0)
             && !input.wheel.left_pressed
             && !input.wheel.right_pressed
             && (!input.remote.connected
                 || (!input.remote.brake
-                    && !input.remote.estop
+                    && !input.remote.brake_b
                     && input.remote.throttle.abs() <= 0.08
                     && input.remote.steer.abs() <= 0.08))
     }
     pub fn update(&mut self, now: Instant, dt: Duration, input: Input) {
+        self.braking = false;
         if self.fault().is_some() {
             self.zero_outputs();
             return;
@@ -130,114 +132,114 @@ impl Control {
             self.stop(StopReason::Input);
             return;
         }
-
-        // Stop inputs are authoritative in every state, including Startup. Outputs are already
-        // zero there, but latching and propagation must still be visible and testable.
-        if input.wheel.right_pressed {
-            self.stop(StopReason::Rider);
-            return;
+        if self.active() {
+            if dt > MAX_LOOP_GAP {
+                self.stop(StopReason::LoopStall);
+                return;
+            }
+            if !input.driver_enabled {
+                self.stop(StopReason::Competition);
+                return;
+            }
+            if self.mode == Mode::Controller && !input.remote.connected {
+                self.stop(StopReason::ControllerLost);
+                return;
+            }
+            if !input.ready {
+                self.stop(StopReason::Link);
+                return;
+            }
         }
-        if input.remote.connected && input.remote.estop {
-            self.stop(StopReason::Remote);
+
+        // B is momentary electrical Brake. Release cannot restore a held throttle request.
+        if input.wheel.right_pressed || (input.remote.connected && input.remote.brake_b) {
+            if self.active() {
+                self.resume_neutral = true;
+            }
+            self.neutral_since = None;
+            self.zero_outputs();
+            self.braking = true;
             return;
         }
 
         let switch_mode = input.switch_mode || input.remote.switch_mode;
-        if switch_mode {
-            if self.armed() {
-                self.park();
-                return;
-            }
+        if switch_mode
+            && input.stopped
+            && Self::neutral(self.mode, &input)
+            && (self.mode == Mode::Controller || input.remote.connected)
+        {
             if self.mode == Mode::Controller {
                 self.mode = Mode::Wheel;
             } else if input.remote.connected {
                 self.mode = Mode::Controller;
             }
-            if !matches!(self.state, RunState::Startup) {
-                self.park();
-                return;
-            }
-        }
-
-        // Startup has no motion authority. It advances only after links are healthy, motors are
-        // stopped, field control permits driving, and both stop buttons are released.
-        if matches!(self.state, RunState::Startup) {
-            self.zero_outputs();
-            if input.ready
-                && input.stopped
-                && input.driver_enabled
-                && !input.wheel.right_pressed
-                && !(input.remote.connected && input.remote.estop)
-            {
-                self.park();
-            }
-            return;
-        }
-
-        if dt > MAX_LOOP_GAP {
-            self.stop(StopReason::LoopStall);
-            return;
-        }
-        if !input.driver_enabled {
-            if self.armed() {
-                self.stop(StopReason::Competition);
+            if self.active() {
+                self.hold_until_neutral();
             } else {
-                self.park();
+                self.neutral_since = None;
+                self.zero_outputs();
             }
             return;
         }
-        if self.mode == Mode::Controller && !input.remote.connected {
-            self.stop(StopReason::ControllerLost);
-            return;
-        }
-        if self.armed() && !input.ready {
-            self.stop(StopReason::Link);
+
+        if !input.driver_enabled {
+            self.neutral_since = None;
+            self.zero_outputs();
             return;
         }
 
-        if self.duty.update(
+        self.duty.update(
             now,
             dt,
             self.volts.iter().any(|v| v.abs() > 0.01) || (input.ready && !input.stopped),
-        ) {
-            self.stop(StopReason::DutyLimit);
-            return;
-        }
-        if input.park {
-            self.park();
-            return;
-        }
+        );
         match self.state {
-            RunState::Parked { neutral_since } => {
-                let neutral_since = if Self::neutral(self.mode, &input) && input.stopped {
-                    Some(neutral_since.unwrap_or(now))
+            RunState::WaitingForReady => {
+                self.neutral_since = if Self::neutral(self.mode, &input) && input.stopped {
+                    Some(self.neutral_since.unwrap_or(now))
                 } else {
                     None
                 };
-                let settled = neutral_since
+                let settled = self
+                    .neutral_since
                     .is_some_and(|since| now.duration_since(since) >= Duration::from_millis(500));
-                if (input.arm || input.remote.arm)
-                    && settled
+                if settled
                     && input.ready
-                    && input.cool
+                    && (self.mode == Mode::Wheel || input.remote.connected)
+                    && input.battery_cool
                     && input.calibrated
                     && input.steer.abs() <= 0.08
                 {
-                    self.state = RunState::Armed;
-                } else {
-                    self.state = RunState::Parked { neutral_since };
+                    self.state = RunState::Active;
+                    self.neutral_since = None;
                 }
                 self.zero_outputs();
             }
-            RunState::Armed => {
-                let passenger_brake = self.mode == Mode::Controller && input.wheel.left_pressed;
-                if passenger_brake || (input.remote.connected && input.remote.brake) {
-                    self.park();
+            RunState::Active => {
+                let coast_hold = (self.mode == Mode::Controller && input.wheel.left_pressed)
+                    || (input.remote.connected && input.remote.brake);
+                if coast_hold {
+                    self.hold_until_neutral();
+                    return;
+                }
+                if self.resume_neutral {
+                    self.neutral_since = if Self::neutral(self.mode, &input) && input.stopped {
+                        Some(self.neutral_since.unwrap_or(now))
+                    } else {
+                        None
+                    };
+                    if self.neutral_since.is_some_and(|since| {
+                        now.duration_since(since) >= Duration::from_millis(500)
+                    }) {
+                        self.resume_neutral = false;
+                        self.neutral_since = None;
+                    }
+                    self.zero_outputs();
                     return;
                 }
                 if self.mode == Mode::Wheel && !input.wheel.left_pressed {
-                    // Hold-to-run release is an immediate zero/coast, but it does not discard a
-                    // successful ARM. The rider may press again without returning P17 to zero.
+                    // Hold-to-run release immediately zeros/coasts. The rider may press again
+                    // without returning P17 to zero or waiting for another activation.
                     self.zero_outputs();
                     return;
                 }
@@ -264,7 +266,7 @@ impl Control {
                         ramp_voltage(*voltage, speed_voltage(target * DEMO_TARGET_RPM, rpm), dt);
                 }
             }
-            RunState::Startup | RunState::Fault(_) => unreachable!(),
+            RunState::Fault(_) => unreachable!(),
         }
     }
 }
@@ -321,53 +323,44 @@ mod tests {
         Input {
             calibrated: true,
             ready: true,
-            cool: true,
+            battery_cool: true,
             stopped: true,
             driver_enabled: true,
             ..Input::default()
         }
     }
-    fn arm(control: &mut Control, now: Instant, mut i: Input) {
+    fn activate(control: &mut Control, now: Instant, i: Input) {
         control.update(now, CONTROL_INTERVAL, i);
         control.update(now + Duration::from_secs(1), CONTROL_INTERVAL, i);
-        i.arm = true;
-        control.update(now + Duration::from_secs(2), CONTROL_INTERVAL, i);
-        assert!(control.armed());
+        assert!(control.active());
     }
     #[test]
-    fn boot_high_throttle_or_held_button_cannot_arm() {
+    fn boot_high_throttle_or_held_button_cannot_activate() {
         for mut i in [ready(), ready()] {
             let now = Instant::now();
             let mut c = Control::default();
-            i.arm = true;
             i.wheel.throttle = 1.0;
             c.update(now, CONTROL_INTERVAL, i);
             c.update(now + Duration::from_secs(1), CONTROL_INTERVAL, i);
-            assert!(!c.armed());
+            assert!(!c.active());
             i.wheel.throttle = 0.0;
             i.wheel.left_pressed = true;
             c.update(now + Duration::from_secs(2), CONTROL_INTERVAL, i);
-            assert!(!c.armed());
+            assert!(!c.active());
         }
     }
     #[test]
-    fn startup_estop_latches_immediately() {
+    fn startup_brake_does_not_latch() {
         let now = Instant::now();
         for remote in [false, true] {
             let mut control = Control::default();
             let mut input = Input::default();
             input.wheel.right_pressed = !remote;
             input.remote.connected = remote;
-            input.remote.estop = remote;
+            input.remote.brake_b = remote;
             control.update(now, CONTROL_INTERVAL, input);
-            assert_eq!(
-                control.fault(),
-                Some(if remote {
-                    StopReason::Remote
-                } else {
-                    StopReason::Rider
-                })
-            );
+            assert_eq!(control.fault(), None);
+            assert!(control.braking);
             assert_eq!(control.volts, [0.0; 2]);
         }
     }
@@ -379,15 +372,15 @@ mod tests {
         input.driver_enabled = false;
         control.update(now, MAX_LOOP_GAP * 2, input);
         assert_eq!(control.fault(), None);
-        assert!(!control.armed());
+        assert!(!control.active());
         assert_eq!(control.volts, [0.0; 2]);
     }
     #[test]
-    fn release_brakes_but_stays_armed_and_repress_resumes() {
+    fn release_coasts_but_stays_active_and_repress_resumes() {
         let now = Instant::now();
         let mut c = Control::default();
         let mut i = ready();
-        arm(&mut c, now, i);
+        activate(&mut c, now, i);
         i.wheel.left_pressed = true;
         i.wheel.throttle = 1.0;
         c.update(now + Duration::from_secs(3), CONTROL_INTERVAL, i);
@@ -395,7 +388,7 @@ mod tests {
         i.wheel.left_pressed = false;
         c.update(now + Duration::from_secs(4), CONTROL_INTERVAL, i);
         assert_eq!(c.volts, [0.0; 2]);
-        assert!(c.armed());
+        assert!(c.active());
         i.wheel.left_pressed = true;
         c.update(now + Duration::from_secs(5), CONTROL_INTERVAL, i);
         assert!(c.volts[0] > 0.0);
@@ -409,7 +402,7 @@ mod tests {
         };
         let mut i = ready();
         i.remote.connected = true;
-        arm(&mut c, now, i);
+        activate(&mut c, now, i);
         i.remote.steer = 1.0;
         c.update(now, CONTROL_INTERVAL, i);
         assert!(c.volts[0] > 0.0);
@@ -426,7 +419,7 @@ mod tests {
         let now = Instant::now();
         let mut control = Control::default();
         let mut input = ready();
-        arm(&mut control, now, input);
+        activate(&mut control, now, input);
         input.wheel.left_pressed = true;
         input.wheel.throttle = 0.5;
         input.steer = 1.0;
@@ -439,7 +432,7 @@ mod tests {
         let now = Instant::now();
         let mut control = Control::default();
         let mut input = ready();
-        arm(&mut control, now, input);
+        activate(&mut control, now, input);
         input.wheel.left_pressed = true;
         input.wheel.throttle = -1.0;
         control.update(now + Duration::from_secs(3), CONTROL_INTERVAL, input);
@@ -469,7 +462,7 @@ mod tests {
         );
     }
     #[test]
-    fn both_emergency_stops_work_in_both_modes_and_latch() {
+    fn both_b_brakes_stop_both_modes_without_latching() {
         let now = Instant::now();
         for mode in [Mode::Wheel, Mode::Controller] {
             for local in [true, false] {
@@ -479,17 +472,36 @@ mod tests {
                 };
                 let mut i = ready();
                 i.remote.connected = true;
-                arm(&mut c, now, i);
+                activate(&mut c, now, i);
                 i.wheel.right_pressed = local;
-                i.remote.estop = !local;
+                i.remote.brake_b = !local;
                 c.update(now + Duration::from_secs(3), CONTROL_INTERVAL, i);
-                assert!(c.fault().is_some());
+                assert_eq!(c.fault(), None);
+                assert!(c.braking);
                 assert_eq!(c.volts, [0.0; 2]);
+                assert!(c.active());
+                assert!(!c.steering_enabled());
                 i.wheel.right_pressed = false;
-                i.remote.estop = false;
-                i.arm = true;
+                i.remote.brake_b = false;
+                i.wheel.throttle = 1.0;
+                i.wheel.left_pressed = mode == Mode::Wheel;
+                i.remote.throttle = 1.0;
                 c.update(now + Duration::from_secs(4), CONTROL_INTERVAL, i);
-                assert!(!c.armed());
+                assert!(c.active());
+                assert!(!c.braking);
+                assert_eq!(c.volts, [0.0; 2]);
+                i.wheel.throttle = 0.0;
+                i.wheel.left_pressed = false;
+                i.remote.throttle = 0.0;
+                c.update(now + Duration::from_secs(5), CONTROL_INTERVAL, i);
+                c.update(now + Duration::from_secs(6), CONTROL_INTERVAL, i);
+                assert!(c.active());
+                assert!(c.steering_enabled());
+                i.wheel.throttle = 1.0;
+                i.wheel.left_pressed = mode == Mode::Wheel;
+                i.remote.throttle = 1.0;
+                c.update(now + Duration::from_secs(7), CONTROL_INTERVAL, i);
+                assert!(c.volts.iter().all(|voltage| *voltage > 0.0));
             }
         }
     }
@@ -502,52 +514,96 @@ mod tests {
             mode: Mode::Controller,
             ..Control::default()
         };
-        arm(&mut c, now, i);
+        activate(&mut c, now, i);
         i.wheel.left_pressed = true;
         c.update(now, CONTROL_INTERVAL, i);
-        assert!(!c.armed());
+        assert!(c.active());
+        assert_eq!(c.volts, [0.0; 2]);
         i.wheel.left_pressed = false;
-        arm(&mut c, now + Duration::from_secs(2), i);
         i.remote.connected = false;
         c.update(now, CONTROL_INTERVAL, i);
         assert_eq!(c.fault(), Some(StopReason::ControllerLost));
     }
     #[test]
-    fn no_takeover_while_armed_or_moving() {
+    fn no_takeover_while_active_or_moving() {
         let now = Instant::now();
         let mut c = Control::default();
         let mut i = ready();
         i.remote.connected = true;
-        arm(&mut c, now, i);
+        activate(&mut c, now, i);
+        i.stopped = false;
         i.switch_mode = true;
         c.update(now, CONTROL_INTERVAL, i);
         assert_eq!(c.mode, Mode::Wheel);
-        i.park = true;
+        i.stopped = true;
         c.update(now, CONTROL_INTERVAL, i);
-        i.park = false;
-        i.stopped = false;
-        c.update(now + Duration::from_secs(3), CONTROL_INTERVAL, i);
-        assert_eq!(c.mode, Mode::Wheel);
+        assert_eq!(c.mode, Mode::Controller);
+        assert_eq!(c.volts, [0.0; 2]);
     }
     #[test]
     fn disconnected_optional_controller_does_not_block_wheel() {
         let now = Instant::now();
         let mut c = Control::default();
-        arm(&mut c, now, ready());
+        activate(&mut c, now, ready());
         assert!(c.fault().is_none());
     }
 
     #[test]
-    fn mode_selection_works_while_disarmed_without_neutral_dwell() {
+    fn lost_brain_latches_even_after_health_returns() {
         let now = Instant::now();
         let mut control = Control::default();
-        let mut input = Input::default();
+        activate(&mut control, now, ready());
+        let mut input = ready();
+        input.ready = false;
+        control.update(now + Duration::from_secs(3), CONTROL_INTERVAL, input);
+        assert_eq!(control.fault(), Some(StopReason::Link));
+        input = ready();
+        control.update(now + Duration::from_secs(4), CONTROL_INTERVAL, input);
+        assert_eq!(control.fault(), Some(StopReason::Link));
+        assert!(!control.active());
+        assert_eq!(control.volts, [0.0; 2]);
+    }
+    #[test]
+    fn b_cannot_mask_fatal_health_loss() {
+        let now = Instant::now();
+        let mut control = Control::default();
+        activate(&mut control, now, ready());
+        let mut input = ready();
+        input.ready = false;
+        input.wheel.right_pressed = true;
+        control.update(now + Duration::from_secs(3), CONTROL_INTERVAL, input);
+        assert_eq!(control.fault(), Some(StopReason::Link));
+        assert_eq!(control.volts, [0.0; 2]);
+    }
+
+    #[test]
+    fn disconnected_controller_before_motion_is_not_a_fault() {
+        let now = Instant::now();
+        let mut control = Control {
+            mode: Mode::Controller,
+            ..Control::default()
+        };
+        let input = ready();
+        control.update(now, CONTROL_INTERVAL, input);
+        control.update(now + Duration::from_secs(1), CONTROL_INTERVAL, input);
+        assert_eq!(control.fault(), None);
+        assert!(!control.active());
+    }
+
+    #[test]
+    fn mode_selection_requires_stopped_neutral_inputs() {
+        let now = Instant::now();
+        let mut control = Control::default();
+        let mut input = ready();
         input.remote.connected = true;
         input.remote.switch_mode = true;
         input.remote.steer = 0.5;
         control.update(now, CONTROL_INTERVAL, input);
+        assert_eq!(control.mode, Mode::Wheel);
+        input.remote.steer = 0.0;
+        control.update(now + CONTROL_INTERVAL, CONTROL_INTERVAL, input);
         assert_eq!(control.mode, Mode::Controller);
-        assert!(!control.armed());
+        assert!(!control.active());
     }
 
     #[test]
@@ -560,7 +616,7 @@ mod tests {
     }
 
     #[test]
-    fn controller_ignores_p17_and_a_only_arms() {
+    fn controller_ignores_p17_and_activates_automatically() {
         let now = Instant::now();
         let mut control = Control {
             mode: Mode::Controller,
@@ -572,16 +628,14 @@ mod tests {
         assert!(!Control::neutral(Mode::Wheel, &input));
         assert!(Control::neutral(Mode::Controller, &input));
 
-        arm(&mut control, now, input);
+        activate(&mut control, now, input);
         input.remote.throttle = 1.0;
         control.update(now + Duration::from_secs(3), CONTROL_INTERVAL, input);
         assert!(control.volts.iter().all(|voltage| *voltage > 0.0));
 
-        input.remote.arm_held = true;
-        input.remote.enable = true;
         input.remote.throttle = 0.0;
         control.update(now + Duration::from_secs(4), CONTROL_INTERVAL, input);
-        assert!(control.armed());
+        assert!(control.active());
         assert_eq!(control.volts, [0.0; 2]);
     }
 

@@ -18,11 +18,15 @@ use vexide::{
     color::Color,
     display::{Font, FontFamily, FontSize, RenderMode, Text},
     prelude::*,
-    smart::motor::BrakeMode,
+    smart::motor::{BrakeMode, MotorFaults},
     task::{self, Task},
 };
 
 const MOTOR_READY_DWELL: Duration = Duration::from_millis(300);
+
+fn discovery_timed_out(started: Instant, now: Instant, motors_ready: bool) -> bool {
+    !motors_ready && now.duration_since(started) >= MOTOR_DISCOVERY_TIMEOUT
+}
 
 pub struct DrivetrainNode;
 impl NodeType for DrivetrainNode {
@@ -34,7 +38,7 @@ impl ChildNode for DrivetrainNode {
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxSize)]
 pub enum DrivetrainRequest {
-    SetVoltage { millivolts: i16 },
+    SetVoltage { millivolts: i16, brake: bool },
 }
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, MaxSize)]
 pub enum DrivetrainResponse {
@@ -94,14 +98,15 @@ impl Drivetrain {
     pub async fn run(mut self) {
         let mut configured_side = None;
         let mut last_tick = Instant::now();
-        let mut duty = DutyBudget::default();
         let mut voltage: f64 = 0.0;
         let mut target: f64 = 0.0;
+        let mut braking = false;
         let mut health = HealthResponse {
             initializing: true,
             ..HealthResponse::default()
         };
         let mut motors_ready_since = None;
+        let mut discovery_started = None;
         let mut motor_configured = [false; MAX_MOTORS];
         let mut probe_index = 0;
         let mut initializing = true;
@@ -124,7 +129,7 @@ impl Drivetrain {
                 health.battery = BatteryHealth::collect();
             }
             // Service P21 before touching Smart Motors. Missing-device SDK calls must never
-            // starve SYN/ACK, zero commands, E-stop, or health responses.
+            // starve SYN/ACK, zero commands, fault stops, or health responses.
             if self.master.lease.sequence.is_some()
                 && let Some(reason) = health.fault()
             {
@@ -132,8 +137,11 @@ impl Drivetrain {
             }
             match self.master.service(now, health) {
                 Ok(report) => {
-                    if let Some(DrivetrainRequest::SetVoltage { millivolts }) = report.request {
+                    if let Some(DrivetrainRequest::SetVoltage { millivolts, brake }) =
+                        report.request
+                    {
                         target = f64::from(millivolts) / 1000.0;
+                        braking = brake;
                     }
                 }
                 // A full UART queue or bounded RX burst is transient. The master's health retry
@@ -150,15 +158,16 @@ impl Drivetrain {
 
             if initializing && self.master.lease.sequence.is_some() && self.master.fault().is_none()
             {
+                let discovery_started = *discovery_started.get_or_insert(now);
                 health.motors[probe_index] =
                     self.probe_startup_motor(probe_index, &mut motor_configured[probe_index]);
                 probe_index = (probe_index + 1) % MAX_MOTORS;
                 let motors_ready = motor_configured.iter().all(|configured| *configured)
-                    && health.motors.iter().all(|motor| {
-                        motor.is_some_and(|motor| {
-                            motor.fault().is_none() && motor.temperature <= MOTOR_RESTART_C
-                        })
-                    });
+                    && health
+                        .motors
+                        .iter()
+                        .all(|motor| motor.is_some_and(|motor| motor.fault().is_none()));
+                let discovery_expired = discovery_timed_out(discovery_started, now, motors_ready);
                 if motors_ready {
                     let ready_since = *motors_ready_since.get_or_insert(now);
                     if now.duration_since(ready_since) >= MOTOR_READY_DWELL {
@@ -166,6 +175,9 @@ impl Drivetrain {
                     }
                 } else {
                     motors_ready_since = None;
+                }
+                if discovery_expired {
+                    self.master.stop(StopReason::Telemetry);
                 }
             } else if !initializing {
                 health = HealthResponse::collect(
@@ -209,9 +221,6 @@ impl Drivetrain {
                 );
                 configured_side = Some(assignment.side);
             }
-            if duty.update(now, dt, voltage.abs() > 0.01 || health.max_rpm() > 5.0) {
-                self.master.stop(StopReason::DutyLimit);
-            }
             if self.master.fault().is_some() {
                 target = 0.0;
                 voltage = 0.0;
@@ -226,8 +235,22 @@ impl Drivetrain {
                 voltage = 0.0;
                 self.brake_all();
             } else {
-                voltage = ramp_voltage(voltage, target, dt);
-                if voltage == 0.0 {
+                let thermal_limit = health
+                    .motors
+                    .iter()
+                    .flatten()
+                    .map(|motor| {
+                        thermal_voltage_limit(
+                            motor.temperature,
+                            motor.faults & MotorFaults::OVER_TEMPERATURE.bits() != 0,
+                        )
+                    })
+                    .fold(MAX_DRIVE_VOLTS, f64::min);
+                voltage = ramp_voltage(voltage, target.clamp(-thermal_limit, thermal_limit), dt);
+                if braking {
+                    voltage = 0.0;
+                    self.brake_all();
+                } else if voltage == 0.0 {
                     self.coast_all();
                 } else {
                     let mut ok = true;
@@ -297,11 +320,19 @@ fn draw_status(display: &mut Display, view: DrivetrainView) {
                 "ACK SENT / WAIT ZERO".to_owned()
             } else if view.health.initializing {
                 "INITIALIZING MOTORS".to_owned()
+            } else if view
+                .health
+                .motors
+                .iter()
+                .flatten()
+                .any(|motor| motor.is_hot())
+            {
+                "MOTOR HOT / POWER LIMITED".to_owned()
             } else {
                 "LINK ACTIVE".to_owned()
             }
         },
-        |reason| format!("FAULT: {}", reason.label()),
+        |reason| format!("E-STOP: {}", reason.label()),
     );
     let mut motor_status = String::from("MOTORS");
     for (index, motor) in view.health.motors.iter().enumerate() {
@@ -374,12 +405,16 @@ fn draw_status(display: &mut Display, view: DrivetrainView) {
     display.render();
 }
 impl Node<MasterNode, DrivetrainNode> {
-    pub fn set_voltage(&mut self, voltage: f64) -> Result<(), LinkError> {
+    pub fn set_voltage(&mut self, voltage: f64, brake: bool) -> Result<(), LinkError> {
         if !voltage.is_finite() || !(-MAX_DRIVE_VOLTS..=MAX_DRIVE_VOLTS).contains(&voltage) {
+            return Err(LinkError::Protocol);
+        }
+        if brake && voltage != 0.0 {
             return Err(LinkError::Protocol);
         }
         self.request_node(DrivetrainRequest::SetVoltage {
             millivolts: (voltage * 1000.0).round() as i16,
+            brake,
         })
     }
 }
@@ -425,5 +460,25 @@ mod tests {
             std::array::from_fn::<_, MAX_MOTORS, _>(|i| motor_reversed(Side::Right, i)),
             [false, false, true, true]
         );
+    }
+
+    #[test]
+    fn missing_startup_motor_has_bounded_wait() {
+        let started = Instant::now();
+        assert!(!discovery_timed_out(
+            started,
+            started + MOTOR_DISCOVERY_TIMEOUT - CONTROL_INTERVAL,
+            false
+        ));
+        assert!(discovery_timed_out(
+            started,
+            started + MOTOR_DISCOVERY_TIMEOUT,
+            false
+        ));
+        assert!(!discovery_timed_out(
+            started,
+            started + MOTOR_DISCOVERY_TIMEOUT,
+            true
+        ));
     }
 }

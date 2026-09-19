@@ -30,9 +30,9 @@ Messages use Postcard, COBS framing and CRC-32. Startup handshakes assign each s
 
 In **WHEEL** mode, P17 controls forward and reverse speed in 10% steps. The left wheel button on ADI A must be held to drive. The steering wheel has a 10° deadzone and reaches full steering at ±80°. Steering still works with P17 at zero, allowing the chair to turn in place. Full right steering requests `LEFT=1, RIGHT=-1`; full left requests `LEFT=-1, RIGHT=1`.
 
-In **CONTROLLER** mode, left stick Y controls speed and direction while right stick X controls steering. Centering both sticks coasts without disarming. Controller A arms, L1 parks, and B latches the E-stop. P17 is ignored in this mode, and controller loss stops the chair instead of falling back to WHEEL mode.
+In **CONTROLLER** mode, left stick Y controls speed and direction while right stick X controls steering. Centering both sticks coasts. Holding L1 coasts; holding B requests electrical Brake. P17 is ignored in this mode, and controller loss during active operation stops the chair instead of falling back to WHEEL mode.
 
-The display provides CENTER, ARM, PARK and MODE controls. The right wheel button on ADI B is a latched rider E-stop in both modes. Faults remain latched until all three programs restart.
+The display provides MODE and RECENTER controls. Center the wheel and P17 throttle before starting the master program. Once both drive Brains are healthy and controls have been neutral for half a second, the chair turns ON automatically. The right wheel button on ADI B requests electrical Brake in both modes. Release B, let the chair stop, and hold controls neutral for half a second; then driving can resume. Motor heat produces a visible warning and automatic power reduction; accumulated drive time gives rest advice. Missing Brains, missing motors, failed health, link, input and battery checks trigger a latched **E-STOP**. Fix the cause and restart all three programs.
 
 ## Build progress
 
@@ -66,7 +66,7 @@ The first step is 3D-printing the chair mounting bracket, which provides a flat 
 | Master | P20 | Serial link to RIGHT P21 |
 | Master | P21 | Steering feedback motor |
 | Master | ADI A | Hold-to-run / rider brake button |
-| Master | ADI B | Latched rider E-stop |
+| Master | ADI B | Rider electrical Brake while held |
 | LEFT | P4–P7 | Four LEFT drive motors |
 | RIGHT | P4–P7 | Four RIGHT drive motors |
 
@@ -88,7 +88,7 @@ nix develop
 
 The chair weighs about 36 lb. I weigh about 140 lb; it supports me and can reach its configured top speed of about 3.57 mph after accelerating. This is still an experimental ride-on robot, not a road vehicle.
 
-Test changes with the drive wheels raised before testing on the floor. Check motor direction, steering direction, E-stop behavior, motor temperature and stopping distance before carrying anyone else. Use a clear area and a spotter, keep hands and clothing away from the gears, and do not treat software stopping as a mechanical brake or independent power disconnect.
+Test changes with the drive wheels raised before testing on the floor. Check motor direction, steering direction, B braking, motor temperature and stopping distance before carrying anyone else. Use a clear area and a spotter, keep hands and clothing away from the gears, and do not treat software stopping as a mechanical brake or independent power disconnect.
 
 ## Documentation
 

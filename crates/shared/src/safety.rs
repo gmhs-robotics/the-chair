@@ -6,6 +6,10 @@ use std::time::{Duration, Instant};
 pub const CONTROL_INTERVAL: Duration = Duration::from_millis(10);
 pub const COMMAND_INTERVAL: Duration = Duration::from_millis(40);
 pub const COMMAND_TIMEOUT: Duration = Duration::from_millis(150);
+/// Manual startup has time to launch all programs; unresolved missing links then latch.
+pub const STARTUP_LINK_TIMEOUT: Duration = Duration::from_secs(60);
+/// Transient motor discovery can recover, but persistent missing hardware cannot start.
+pub const MOTOR_DISCOVERY_TIMEOUT: Duration = Duration::from_secs(5);
 pub const MAX_LOOP_GAP: Duration = Duration::from_millis(100);
 pub const MAX_DRIVE_VOLTS: f64 = 12.0;
 pub const MIN_BREAKAWAY_VOLTS: f64 = 1.2;
@@ -13,10 +17,8 @@ pub const DEMO_TARGET_RPM: f64 = 200.0;
 pub const ACCEL_VOLTS_PER_SECOND: f64 = 12.0;
 pub const DECEL_VOLTS_PER_SECOND: f64 = 12.0;
 pub const MOTOR_CURRENT_LIMIT_A: f64 = 2.5;
-pub const MOTOR_STOP_C: f32 = 50.0;
-// Installed V5 motors commonly quantize idle telemetry to 40/45 C. Permit 45 C at startup while
-// retaining a separate 50 C immediate-stop threshold and a 5 C restart margin.
-pub const MOTOR_RESTART_C: f32 = 45.0;
+pub const MOTOR_WARN_C: f32 = 50.0;
+pub const MOTOR_DERATE_END_C: f32 = 60.0;
 pub const BATTERY_STOP_C: f32 = 45.0;
 pub const BATTERY_RESTART_C: f32 = 38.0;
 pub const MAX_DRIVE_TIME: Duration = Duration::from_secs(120);
@@ -26,16 +28,12 @@ pub const WHEEL_PER_MOTOR_REV: f64 = 72.0 / 48.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, MaxSize)]
 pub enum StopReason {
-    Rider,
-    Remote,
     ControllerLost,
     Link,
     Protocol,
     CommandTimeout,
     Telemetry,
-    MotorHot,
     Battery,
-    DutyLimit,
     Steering,
     Input,
     LoopStall,
@@ -44,16 +42,12 @@ pub enum StopReason {
 impl StopReason {
     pub const fn label(self) -> &'static str {
         match self {
-            Self::Rider => "RIDER E-STOP",
-            Self::Remote => "REMOTE E-STOP",
             Self::ControllerLost => "CONTROLLER LOST",
             Self::Link => "LINK LOST",
             Self::Protocol => "PROTOCOL FAULT",
             Self::CommandTimeout => "COMMAND TIMEOUT",
             Self::Telemetry => "MOTOR / SENSOR FAULT",
-            Self::MotorHot => "MOTOR HOT - COOL DOWN",
             Self::Battery => "BATTERY UNSAFE",
-            Self::DutyLimit => "DUTY LIMIT - REST",
             Self::Steering => "STEERING FAULT",
             Self::Input => "INPUT FAULT",
             Self::LoopStall => "CONTROL LOOP STALLED",
@@ -64,6 +58,18 @@ impl StopReason {
 
 pub fn motor_rpm_to_mph(rpm: f64) -> f64 {
     std::f64::consts::PI * WHEEL_DIAMETER_IN * WHEEL_PER_MOTOR_REV * rpm / 1056.0
+}
+
+/// Thermal output limit recovers automatically as temperature falls.
+pub fn thermal_voltage_limit(temperature: f32, over_temperature_flag: bool) -> f64 {
+    let fraction =
+        ((MOTOR_DERATE_END_C - temperature) / (MOTOR_DERATE_END_C - MOTOR_WARN_C)).clamp(0.0, 1.0);
+    let limit = MAX_DRIVE_VOLTS * f64::from(fraction);
+    if over_temperature_flag {
+        limit.min(MAX_DRIVE_VOLTS / 2.0)
+    } else {
+        limit
+    }
 }
 
 /// Acceleration limited; a zero command removes drive voltage immediately.
@@ -86,21 +92,20 @@ pub fn ramp_voltage(current: f64, target: f64, dt: Duration) -> f64 {
     current + (target - current).clamp(-step, step)
 }
 
-/// Short stops do not reset the duty budget. Only a full minute at rest does.
+/// Advisory time counter; never grants or removes motion authority.
 #[derive(Default)]
 pub struct DutyBudget {
     used: Duration,
     resting_since: Option<Instant>,
 }
 impl DutyBudget {
-    pub fn update(&mut self, now: Instant, dt: Duration, moving: bool) -> bool {
+    pub fn update(&mut self, now: Instant, dt: Duration, moving: bool) {
         if moving {
             self.resting_since = None;
             self.used += dt;
         } else if now.duration_since(*self.resting_since.get_or_insert(now)) >= REST_TIME {
             self.used = Duration::ZERO;
         }
-        self.used >= MAX_DRIVE_TIME
     }
     pub fn seconds_left(&self) -> u64 {
         MAX_DRIVE_TIME.saturating_sub(self.used).as_secs()
@@ -132,13 +137,22 @@ mod tests {
         assert!((motor_rpm_to_mph(60.0) - 1.0709975).abs() < 0.00001);
     }
     #[test]
+    fn heat_derates_without_latching_and_recovers() {
+        assert_eq!(thermal_voltage_limit(45.0, false), MAX_DRIVE_VOLTS);
+        assert_eq!(thermal_voltage_limit(55.0, false), 6.0);
+        assert_eq!(thermal_voltage_limit(60.0, false), 0.0);
+        assert_eq!(thermal_voltage_limit(40.0, true), 6.0);
+        assert_eq!(thermal_voltage_limit(45.0, false), MAX_DRIVE_VOLTS);
+    }
+    #[test]
     fn brief_stops_do_not_erase_duty() {
         let now = Instant::now();
         let mut duty = DutyBudget::default();
-        assert!(!duty.update(now, Duration::from_secs(119), true));
+        duty.update(now, Duration::from_secs(119), true);
         duty.update(now, Duration::ZERO, false);
         duty.update(now + Duration::from_secs(59), Duration::ZERO, false);
-        assert!(duty.update(now + Duration::from_secs(59), Duration::from_secs(1), true));
+        duty.update(now + Duration::from_secs(59), Duration::from_secs(1), true);
+        assert_eq!(duty.seconds_left(), 0);
     }
     #[test]
     fn full_rest_restores_budget() {

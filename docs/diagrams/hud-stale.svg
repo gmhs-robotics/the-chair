@@ -6,7 +6,7 @@
 <text x='357' y='22' font-family='monospace' font-size='16' fill='#101722'>E-STOP</text>
 <text x='12' y='71' font-family='monospace' font-size='28' fill='#f1f5f9'>--.--</text>
 <text x='12' y='89' font-family='monospace' font-size='12' fill='#9cadc3'>MPH estimated</text>
-<text x='12' y='108' font-family='monospace' font-size='12' fill='#9cadc3'>Duty  98s</text>
+<text x='12' y='108' font-family='monospace' font-size='12' fill='#9cadc3'>Rest in  98s</text>
 <text x='332' y='52' font-family='monospace' font-size='12' fill='#f1f5f9'>P17 ROT   +0%</text>
 <rect x='332' y='59' width='136' height='10' fill='#1c2939'/>
 <text x='332' y='89' font-family='monospace' font-size='12' fill='#9cadc3'>POS   0.0 DEG</text>
@@ -47,14 +47,10 @@
 <rect x='8' y='33' width='464' height='99' fill='#571e2c'/>
 <text x='18' y='55' font-family='monospace' font-size='16' fill='#f1f5f9'>LINK LOST</text>
 <text x='18' y='76' font-family='monospace' font-size='12' fill='#f1f5f9'>BRAKES REQUESTED / POWER OFF IF UNSAFE</text>
-<text x='18' y='96' font-family='monospace' font-size='12' fill='#f1f5f9'>Fix cause. Cool motors &lt;=40C, packs &lt;38C.</text>
-<text x='18' y='116' font-family='monospace' font-size='12' fill='#f1f5f9'>Restart all 3; tap CENTER, wait neutral, ARM.</text>
-<rect x='2' y='207' width='116' height='31' fill='#1c2939'/>
+<text x='18' y='96' font-family='monospace' font-size='12' fill='#f1f5f9'>Fix cause. Inspect links, sensors and power.</text>
+<text x='18' y='116' font-family='monospace' font-size='12' fill='#f1f5f9'>Fix cause; restart all 3 programs.</text>
+<rect x='2' y='207' width='236' height='31' fill='#1c2939'/>
 <text x='8' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>MODE / X</text>
-<rect x='122' y='207' width='116' height='31' fill='#1c2939'/>
-<text x='128' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>CENTERED</text>
-<rect x='242' y='207' width='116' height='31' fill='#1c2939'/>
-<text x='248' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>ARM / A</text>
-<rect x='362' y='207' width='116' height='31' fill='#571e2c'/>
-<text x='368' y='227' font-family='monospace' font-size='12' fill='#ff6675'>PARK / L1</text>
+<rect x='242' y='207' width='236' height='31' fill='#1c2939'/>
+<text x='248' y='227' font-family='monospace' font-size='12' fill='#f1f5f9'>RECENTER</text>
 </svg>
