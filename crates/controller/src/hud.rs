@@ -5,7 +5,7 @@ use chair_shared::{
         HEALTH_FRESHNESS, LinkDiagnostics, NodeState,
         health::{DRIVE_MOTOR_PORTS, HealthResponse},
     },
-    safety::{MOTOR_RESTART_C, MOTOR_STOP_C, StopReason, motor_rpm_to_mph},
+    safety::{StopReason, motor_rpm_to_mph},
 };
 use std::{
     cell::RefCell,
@@ -40,7 +40,8 @@ impl Default for NodeView {
 #[derive(Default, Clone, Copy)]
 pub struct View {
     pub mode: Mode,
-    pub armed: bool,
+    pub active: bool,
+    pub waiting_neutral: bool,
     pub fault: Option<StopReason>,
     pub ready: bool,
     pub telemetry_enabled: bool,
@@ -53,21 +54,19 @@ pub struct View {
     pub remote: bool,
     pub adi_high: [bool; 2],
     pub duty_left: u64,
+    pub braking: bool,
+    pub steering_hot: bool,
 }
 #[derive(Default, Clone, Copy)]
 pub struct Actions {
     pub mode: bool,
     pub center: bool,
-    pub arm: bool,
-    pub park: bool,
     pub reconnect: [bool; 2],
 }
 impl Actions {
     fn merge(&mut self, other: Self) {
         self.mode |= other.mode;
         self.center |= other.center;
-        self.arm |= other.arm;
-        self.park |= other.park;
         for (pending, new) in self.reconnect.iter_mut().zip(other.reconnect) {
             *pending |= new;
         }
@@ -136,20 +135,12 @@ fn action_at(x: i16, y: i16) -> Actions {
         return Actions::default();
     }
     match x {
-        0..=119 => Actions {
+        0..=239 => Actions {
             mode: true,
             ..Actions::default()
         },
-        120..=239 => Actions {
-            center: true,
-            ..Actions::default()
-        },
-        240..=359 => Actions {
-            arm: true,
-            ..Actions::default()
-        },
         _ => Actions {
-            park: true,
+            center: true,
             ..Actions::default()
         },
     }
@@ -206,12 +197,16 @@ fn draw(canvas: &mut impl Canvas, view: View) {
     );
     let status = if view.fault.is_some() {
         "E-STOP"
-    } else if view.armed {
-        "ARMED"
+    } else if view.braking {
+        "BRAKING"
+    } else if view.waiting_neutral {
+        "WAIT NEUTRAL"
+    } else if view.active {
+        "ON"
     } else if view.adi_high[1] {
         "ADI-B HIGH"
     } else if view.ready {
-        "PARKED"
+        "WAIT READY"
     } else if view.telemetry_enabled
         && view
             .nodes
@@ -224,7 +219,7 @@ fn draw(canvas: &mut impl Canvas, view: View) {
     };
     let status_color = if view.fault.is_some() {
         RED
-    } else if view.armed {
+    } else if view.active && !view.waiting_neutral && !view.braking {
         GREEN
     } else {
         YELLOW
@@ -251,7 +246,35 @@ fn draw(canvas: &mut impl Canvas, view: View) {
     };
     canvas.text(12, 43, &speed, 2, WHITE);
     canvas.text(12, 77, "MPH estimated", 0, MUTED);
-    canvas.text(12, 96, &format!("Duty {:3}s", view.duty_left), 0, MUTED);
+    let hot_motor = view.nodes.iter().enumerate().find_map(|(side, node)| {
+        node.health.and_then(|health| {
+            health.motors.iter().enumerate().find_map(|(index, motor)| {
+                motor
+                    .filter(|motor| motor.is_hot())
+                    .map(|motor| (side, DRIVE_MOTOR_PORTS[index], motor.temperature))
+            })
+        })
+    });
+    if let Some((side, port, temperature)) = hot_motor {
+        canvas.text(
+            12,
+            96,
+            &format!(
+                "HOT {}{} {:.0}C: LIMITED",
+                if side == 0 { "L" } else { "R" },
+                port,
+                temperature
+            ),
+            0,
+            YELLOW,
+        );
+    } else if view.steering_hot {
+        canvas.text(12, 96, "STEERING HOT: LIMITED", 0, YELLOW);
+    } else if view.duty_left == 0 {
+        canvas.text(12, 96, "REST ADVISED", 0, YELLOW);
+    } else {
+        canvas.text(12, 96, &format!("Rest in {:3}s", view.duty_left), 0, MUTED);
+    }
     canvas.text(
         332,
         40,
@@ -320,7 +343,7 @@ fn draw(canvas: &mut impl Canvas, view: View) {
                 .is_some_and(|a| a <= HEALTH_FRESHNESS.as_millis())
             && node
                 .health
-                .is_some_and(|h| !h.initializing && !h.requires_estop());
+                .is_some_and(|h| !h.initializing && !h.has_fault());
         let initializing = node.health.is_some_and(|health| health.initializing);
         canvas.rect(x, 135, 223, 66, PANEL);
         canvas.rect(
@@ -377,17 +400,14 @@ fn draw(canvas: &mut impl Canvas, view: View) {
                 let c = if h.initializing {
                     if motor.is_some_and(|m| m.has_nonfatal_warning() && m.fault().is_none()) {
                         YELLOW
-                    } else if motor
-                        .is_some_and(|m| m.temperature <= MOTOR_RESTART_C && m.fault().is_none())
-                    {
+                    } else if motor.is_some_and(|m| !m.is_hot() && m.fault().is_none()) {
                         GREEN
                     } else {
                         YELLOW
                     }
-                } else if motor.is_none_or(|m| m.temperature >= MOTOR_STOP_C || m.fault().is_some())
-                {
+                } else if motor.is_none_or(|m| m.fault().is_some()) {
                     RED
-                } else if motor.is_some_and(|m| m.has_nonfatal_warning()) {
+                } else if motor.is_some_and(|m| m.has_nonfatal_warning() || m.is_hot()) {
                     YELLOW
                 } else {
                     GREEN
@@ -431,32 +451,23 @@ fn draw(canvas: &mut impl Canvas, view: View) {
         canvas.text(
             18,
             84,
-            "Fix cause. Cool motors <=40C, packs <38C.",
+            "Fix cause. Inspect links, sensors and power.",
             0,
             WHITE,
         );
-        canvas.text(
-            18,
-            104,
-            "Restart all 3; tap CENTER, wait neutral, ARM.",
-            0,
-            WHITE,
-        );
+        canvas.text(18, 104, "Fix cause; restart all 3 programs.", 0, WHITE);
     }
     let center_label = if view.calibrated {
-        "CENTERED"
+        "RECENTER"
     } else if view.adi_high[1] {
         "CENTER: ADI-B"
     } else {
         "CENTER"
     };
-    for (i, label) in ["MODE / X", center_label, "ARM / A", "PARK / L1"]
-        .iter()
-        .enumerate()
-    {
-        let x = i as i16 * 120;
-        canvas.rect(x + 2, 207, 116, 31, if i == 3 { 0x571E2C } else { PANEL });
-        canvas.text(x + 8, 215, label, 0, if i == 3 { RED } else { WHITE });
+    for (i, label) in ["MODE / X", center_label].iter().enumerate() {
+        let x = i as i16 * 240;
+        canvas.rect(x + 2, 207, 236, 31, PANEL);
+        canvas.text(x + 8, 215, label, 0, WHITE);
     }
 }
 
@@ -468,15 +479,11 @@ mod tests {
     #[test]
     fn touch_regions_create_and_preserve_pending_actions() {
         let mut pending = action_at(20, 220);
-        pending.merge(action_at(180, 220));
         pending.merge(action_at(300, 220));
-        pending.merge(action_at(420, 220));
         pending.merge(action_at(20, 160));
         pending.merge(action_at(300, 160));
         assert!(pending.mode);
         assert!(pending.center);
-        assert!(pending.arm);
-        assert!(pending.park);
         assert_eq!(pending.reconnect, [true, true]);
         assert!(!action_at(200, 100).mode);
     }
@@ -522,7 +529,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let mut v = View {
             ready: true,
-            armed: true,
+            active: true,
             calibrated: true,
             steer: 0.35,
             throttle: 0.4,
@@ -554,12 +561,12 @@ mod tests {
             age_ms: Some(20),
             diagnostics: LinkDiagnostics::default(),
         }; 2];
-        let mut parked = v;
-        parked.armed = false;
-        parked.steer = 0.0;
-        parked.throttle = 0.0;
-        parked.throttle_degrees = 0.0;
-        for node in &mut parked.nodes {
+        let mut idle = v;
+        idle.active = false;
+        idle.steer = 0.0;
+        idle.throttle = 0.0;
+        idle.throttle_degrees = 0.0;
+        for node in &mut idle.nodes {
             for motor in node.health.as_mut().unwrap().motors.iter_mut().flatten() {
                 motor.rpm = 0.0;
             }
@@ -569,14 +576,11 @@ mod tests {
             throttle: 0.0,
             ..v
         };
-        let mut estop = parked;
-        estop.ready = false;
-        estop.fault = Some(StopReason::MotorHot);
-        let left = estop.nodes[0].health.as_mut().unwrap();
-        left.stopped = Some(StopReason::MotorHot);
+        let mut hot = v;
+        let left = hot.nodes[0].health.as_mut().unwrap();
         left.motors[3].as_mut().unwrap().temperature = 52.0;
         left.motors[3].as_mut().unwrap().faults = 0x01;
-        let mut stale = parked;
+        let mut stale = idle;
         stale.ready = false;
         stale.fault = Some(StopReason::Link);
         stale.nodes[1].age_ms = Some(700);
@@ -592,10 +596,10 @@ mod tests {
                 },
             ),
             (
-                "parked",
-                "Parked wheel mode",
-                "Calibrated and connected; zero speed. PARKED does not certify arming eligibility.",
-                parked,
+                "idle",
+                "Waiting for readiness in wheel mode",
+                "Connected but waiting for neutral controls and a stopped chair.",
+                idle,
             ),
             (
                 "driving",
@@ -610,10 +614,10 @@ mod tests {
                 controller,
             ),
             (
-                "estop",
-                "Latched motor temperature fault",
-                "MOTOR HOT - COOL DOWN; left port 7 reports 52 Celsius. Brakes requested.",
-                estop,
+                "hot",
+                "Motor temperature warning",
+                "Left port 7 reports 52 Celsius; power is limited automatically.",
+                hot,
             ),
             (
                 "stale",

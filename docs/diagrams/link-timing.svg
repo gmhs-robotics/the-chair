@@ -9,7 +9,7 @@
 <text x='790' y='180' font-family='DejaVu Sans, sans-serif' font-size='20' font-weight='700' fill='#087f72'>CHILD P21</text>
 <polyline points='260,205 260,735' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' />
 <polyline points='930,205 930,735' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' />
-<text x='290' y='233' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>SYN: protocol v3 + side + session</text>
+<text x='290' y='233' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#086baf'>SYN: protocol v6 + side + session</text>
 <polyline points='260,245 930,245' fill='none' stroke='#086baf' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>
 <text x='290' y='293' font-family='DejaVu Sans, sans-serif' font-size='16' font-weight='400' fill='#087f72'>ACK: drivetrain identity + same assignment</text>
 <polyline points='930,305 260,305' fill='none' stroke='#087f72' stroke-width='3' stroke-linejoin='round' marker-end='url(#arrow)'/>

@@ -12,7 +12,7 @@ Three VEX V5 Brains coordinate a differential-drive chair demonstrator. WHEEL mo
 | --- | --- |
 | Connect the finished chair | [Wiring and hardware assumptions](WIRING.md) |
 | Start, drive, brake or change mode | [Operator guide](OPERATING.md) |
-| Understand a display or failed ARM | [Dashboard guide](HUD.md) |
+| Understand the dashboard or WAIT READY | [Dashboard guide](HUD.md) |
 | Investigate a latched stop | [Fault messages and recovery](FAULTS.md) |
 | Review limits and fault behavior | [Software design and stops](SAFETY.md) |
 | Prepare for first physical operation | [Commissioning and test record](COMMISSIONING.md) |
@@ -20,11 +20,11 @@ Three VEX V5 Brains coordinate a differential-drive chair demonstrator. WHEEL mo
 
 ## The two driving modes
 
-**WHEEL:** zero the P17 Rotation Sensor with CENTER, arm, hold the left rider button, rotate the throttle forward, and turn the wheel. The wheel applies limited resistive feedback.
+**WHEEL:** center the wheel and P17 before startup; when ON, hold the left rider button, rotate the throttle forward, and turn the wheel. The wheel applies limited resistive feedback.
 
-**CONTROLLER:** press A once to arm, use left stick Y for forward/reverse, and right stick X for steering or an in-place turn. No button hold is required. P17 is ignored. The physical wheel follows steering while armed. The rider's left button coasts/disarms and right button E-stops.
+**CONTROLLER:** use left stick Y for forward/reverse, and right stick X for steering or an in-place turn. No button hold is required. P17 is ignored. The physical wheel follows steering while ON. The rider's left button coasts while held and right button requests electrical Brake while held.
 
-The right rider button is a latched software E-stop in both modes. Controller B is another E-stop when connected. Neither replaces an independently reviewed means of stopping the final hardware.
+The right rider button and connected controller B request electrical Brake while held in both modes without latching. Release, stop and hold controls neutral for 500 ms to resume. Neither replaces an independently reviewed means of stopping the final hardware.
 
 ## Configuration scope
 

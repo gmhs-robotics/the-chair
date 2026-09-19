@@ -41,7 +41,7 @@ class Diagram:
 
 def topology():
     d=Diagram("01","Three-Brain control layout","The master calculates commands; each drivetrain Brain controls and monitors four motors.",680,plain=True)
-    d.card(350,40,500,195,"MASTER / SLOT 1","Reads controls and commands both sides",["P17 throttle • P21 steering • optional radio","Runs HUD, arming, drive mixing and system safety","P19 sends LEFT • P20 sends RIGHT"])
+    d.card(350,40,500,195,"MASTER / SLOT 1","Reads controls and commands both sides",["P17 throttle • P21 steering • optional radio","Runs HUD, readiness, drive mixing and system safety","P19 sends LEFT • P20 sends RIGHT"])
     d.line("475,235 475,300 295,300 295,350",arrow=True)
     d.line("725,235 725,300 905,300 905,350",arrow=True)
     d.text(401,275,"COMMANDS DOWN • HEALTH BACK",17,BLUE,True)
@@ -52,7 +52,7 @@ def topology():
 def ports():
     d=Diagram("02","Steering-wheel connections","ADI letters belong to the master. Smart Port 21 has a different job on each Brain.",1040)
     d.card(410,300,380,225,"MASTER","V5 Brain",["P19 = LEFT data link","P20 = RIGHT data link","P21 = steering motor","P18 = controller radio"])
-    for y,letter,title,lines,color in [(170,"ADI A","Left button",["WHEEL: hold to drive","CONTROLLER: brake"],BLUE),(360,"ADI B","Right button",["Rider E-stop","Active in both modes"],RED),(550,"SMART P17","Rotation throttle",["0–270° forward","ADI C unused"],BLUE)]:
+    for y,letter,title,lines,color in [(170,"ADI A","Left button",["WHEEL: hold to drive","CONTROLLER: park"],BLUE),(360,"ADI B","Right button",["Brake + park","No latch; both modes"],RED),(550,"SMART P17","Rotation throttle",["0–270° forward","ADI C unused"],BLUE)]:
         d.card(40,y,310,160,letter,title,lines,color)
     d.line("350,250 380,250 380,354 410,354")
     d.line("350,440 410,440",RED)
@@ -67,54 +67,54 @@ def ports():
     d.text(715,718,"P20",17,GREEN,True)
     d.card(100,775,390,110,"LEFT CHILD","Connect to P21",[],GREEN)
     d.card(710,775,390,110,"RIGHT CHILD","Connect to P21",[],GREEN)
-    d.note(910,"RIDER CONTROLS REMAIN ATTACHED",["Buttons are active LOW. A broken E-stop wire can look released; this is not a monitored safety circuit."],RED)
+    d.note(910,"RIDER CONTROLS REMAIN ATTACHED",["Buttons read HIGH when pressed. A broken brake wire can look released; this is not a monitored stop circuit."],RED)
     d.save("controller-brain-ports.svg")
 
 def operation():
-    d=Diagram("03","From parked to driving","Boot defaults to WHEEL. Changing modes never transfers a live throttle request.",1040)
-    d.card(40,170,340,180,"01 / START","Master first",["Start children manually.","Wait for healthy LEFT + RIGHT.","Center wheel; tap CENTER."])
+    d=Diagram("03","From start to driving","Boot defaults to WHEEL. Changing modes never transfers a live throttle request.",1040)
+    d.card(40,170,340,180,"01 / START","Master first",["Center wheel and P17 first.","Start children within 60 s.","Wait for healthy LEFT + RIGHT."])
     d.card(430,170,340,180,"02 / PREPARE","Neutral for 500 ms",["P17 zero; sticks centered.","Release enable and brake.","Wheel near calibrated center."])
-    d.card(820,170,340,180,"03 / ARM","Tap ARM or press A",["Both nodes healthy and cool.","CONTROLLER needs radio.","Then press drive enable."])
+    d.card(820,170,340,180,"03 / ON","Auto-ON when ready",["Both nodes healthy; battery cool.","CONTROLLER needs radio.","WHEEL needs left enable to move."])
     d.line("380,258 430,258",arrow=True)
     d.line("770,258 820,258",arrow=True)
     d.line("990,350 990,400 300,400 300,440",arrow=True)
     d.line("990,400 900,400 900,440",arrow=True)
-    d.card(40,440,520,220,"WHEEL","Hold left; rotate P17 throttle",["Positive forward; negative reverse.","Release left button: immediate brake.","ARMED remains; hold again to resume.","Use PARK to disarm."],GREEN)
-    d.card(640,440,520,220,"CONTROLLER","Hold A/R1; use both sticks",["A arms + enables; R1 also enables.","Left stick up: forward. Right X: steer.","Release enable: brake; remains armed.","L1 or rider left: brake + disarm."],GREEN)
-    d.note(704,"AFTER A NORMAL STOP",["Return controls to neutral, stop, release buttons, then ARM again.","MODE / X while armed parks first. Once stopped and neutral, select the mode again."],BLUE)
-    d.note(844,"RIDER RIGHT BUTTON OR CONTROLLER B: LATCHED E-STOP",["Release cannot resume motion. Repair the cause and restart all three programs.","Radio loss in CONTROLLER also latches; there is no automatic WHEEL fallback."],RED)
+    d.card(40,440,520,220,"WHEEL","Hold left; rotate P17 throttle",["Positive forward; negative reverse.","Release left button: immediate Coast.","Hold left again to resume.","B requests electrical Brake."],GREEN)
+    d.card(640,440,520,220,"CONTROLLER","Use both sticks",["A and R1 are unused.","Left stick up: forward. Right X: steer.","Centered sticks: Coast.","L1 or rider left: Coast while held."],GREEN)
+    d.note(704,"AFTER A NORMAL STOP",["Release rider A: Coast; hold again to resume. L1: Coast while held.","MODE / X changes only when stopped and neutral."],BLUE)
+    d.note(844,"RIDER RIGHT BUTTON OR CONTROLLER B: BRAKE",["Release, stop and hold controls neutral 500 ms; then drive.","Radio loss in CONTROLLER still latches; no automatic WHEEL fallback."],RED)
     d.save("driving-flow.svg")
 
 def node():
     d=Diagram("04","Drive-node command lifecycle","Link first, then recoverable motor discovery. First zero starts the 150 ms command lease.",1080)
-    d.card(40,170,510,155,"BOOT","Open P21; block motor output",["Do no Smart Motor polling before handshake.","Startup motor WAIT never latches a fault."],GREEN)
-    d.card(650,170,510,155,"ASSIGN","Wait for master on P21",["Accept protocol v3, side and session.","Initialization health grants no motion authority."])
+    d.card(40,170,510,155,"BOOT","Open P21; block motor output",["Do no Smart Motor polling before handshake.","Missing motor after 5 s latches E-STOP."],GREEN)
+    d.card(650,170,510,155,"ASSIGN","Wait for master on P21",["Accept protocol v6, side and session.","Initialization health grants no motion authority."])
     d.line("550,246 650,246",arrow=True)
     d.card(650,410,510,180,"FIRST COMMAND","Accept zero; start lease",["Lost ACK may be retried before first zero.","Every later sequence must advance.","Duplicate SYN cannot renew an active lease."])
     d.line("905,325 905,410",arrow=True)
-    d.card(40,410,510,180,"DISCOVER / RUN","Discover, then supervise",["Probe one motor per iteration; wait for 4 stable.","After ready, check motor, battery, loop and duty.","Apply bounded ramp or immediate Brake."],GREEN)
+    d.card(40,410,510,180,"DISCOVER / RUN","Discover, then supervise",["Probe one motor per iteration; wait for 4 stable.","Check motor, battery and command lease.","Derate heat; B requests immediate Brake."],GREEN)
     d.line("650,493 550,493",arrow=True)
     d.line("40,493 20,493 20,375 295,375 295,410",GREEN,True)
     d.text(70,366,"REPEAT WHILE HEALTHY",14,GREEN,True)
     d.line("295,590 295,660 600,660 600,710",RED,True)
     d.line("905,590 905,660 600,660",RED)
     d.text(478,643,"ANY DETECTED FAULT",16,RED,True)
-    d.card(230,710,740,175,"LATCHED STOP","Brake now; keep reporting health",["Retry local Brake every nominal 10 ms.","No command, reconnect or cooling clears the latch.","Repair, then restart all three programs."],RED)
+    d.card(230,710,740,175,"E-STOP","Brake now; keep reporting health",["Retry local Brake every nominal 10 ms.","Heat and duty do not enter this state.","Repair missing hardware, then restart all programs."],RED)
     d.note(925,"LOCAL PROTECTION HAS A HARDWARE LIMIT",["A frozen CPU, failed SDK or lost supply may prevent braking. Software is not an independent power cut."])
     d.save("drive-nodes.svg")
 
 def signals():
     d=Diagram("06","From rider input to motor voltage","Control flow, not electrical wiring. Positive steering requests a right turn.",1080)
-    d.card(40,165,520,170,"WHEEL INPUT","P17 throttle + physical wheel",["Rotation Sensor: signed 10% steps; ADI A: enable.","P21 encoder: 10° deadzone; full at ±80°.","ADI B: latched E-stop in either mode."])
-    d.card(640,165,520,170,"CONTROLLER INPUT","Radio on master P18",["Left Y up: throttle; right X: steering.","A: arm once; sticks drive; L1: coast.","B: E-stop; X: mode; no automatic fallback."])
+    d.card(40,165,520,170,"WHEEL INPUT","P17 throttle + physical wheel",["Rotation Sensor: signed 10% steps; ADI A: enable.","P21 encoder: 10° deadzone; full at ±80°.","ADI B: Brake + park in either mode."])
+    d.card(640,165,520,170,"CONTROLLER INPUT","Radio on master P18",["Left Y up: throttle; right X: steering.","A/R1 unused; L1: coast while held.","B: momentary Brake; X: mode."])
     d.line("300,335 300,375 600,375 600,415",arrow=True)
     d.line("900,335 900,375 600,375")
-    d.card(230,415,740,170,"MASTER / control.rs","Select mode and enforce arming",["Healthy + stopped + cool + centered; neutral for 500 ms.","Only the selected mode supplies throttle and steering.","Rider stops and connected-controller B / L1 remain active."])
+    d.card(230,415,740,170,"MASTER / control.rs","Select mode and enforce readiness",["Healthy + stopped + centered; neutral for 500 ms.","Only the selected mode supplies throttle and steering.","Rider Brake and controller B / L1 remain active."])
     d.line("600,585 600,605 307,605 307,625",arrow=True)
     d.card(40,625,535,180,"MASTER / MIX + SPEED CONTROL","Signed LEFT / RIGHT targets",["WHEEL blends straight drive into a pivot.","Full wheel: LEFT +1 / RIGHT −1 (or reverse).","Feed-forward + RPM error; ramp and cap at ±12 V."],GREEN)
-    d.card(625,625,535,180,"CHILD / LOCAL SUPERVISION","Validate, ramp, drive P4–P7",["Receive voltage, not RPM, over the Smart Cable.","Check lease, health, duty; own ±12 V ramp.","Zero commands request immediate Coast."],GREEN)
+    d.card(625,625,535,180,"CHILD / LOCAL SUPERVISION","Validate, ramp, drive P4–P7",["Receive voltage and Brake flag over cable.","Check lease and health; derate heat.","Zero normally Coasts; B requests Brake."],GREEN)
     d.line("575,715 625,715",GREEN,True)
-    d.note(850,"STEERING FEEDBACK AND DASHBOARD",["Master P21 provides a limited spring/damper in WHEEL; follows steering target in CONTROLLER.","Disarming removes powered steering feedback. Zero throttle while armed retains it.","HUD shows measured wheel position and P17 throttle input, even when CONTROLLER drives."],BLUE)
+    d.note(850,"STEERING FEEDBACK AND DASHBOARD",["Master P21 provides a limited spring/damper in WHEEL; follows steering target in CONTROLLER.","Holding B removes powered steering feedback. Zero throttle while ON retains it.","HUD shows measured wheel position and P17 throttle input, even when CONTROLLER drives."],BLUE)
     d.text(40,1018,"Sources: controller/{main,control,steering,hud}.rs • shared/link/drivetrain.rs",14,"#536879")
     d.save("control-signals.svg")
 
@@ -125,7 +125,7 @@ def timing():
     d.line("260,205 260,735")
     d.line("930,205 930,735",GREEN)
     rows=[
-        (245,"SYN: protocol v3 + side + session",True,BLUE),
+        (245,"SYN: protocol v6 + side + session",True,BLUE),
         (305,"ACK: drivetrain identity + same assignment",False,GREEN),
         (385,"Health request: session + sequence; starts reply deadline",True,BLUE),
         (455,"First accepted SetVoltage(0): starts command lease",True,BLUE),
@@ -145,13 +145,13 @@ def timing():
 def stopping():
     d=Diagram("05","Three ways to stop","A software Brake request is not a mechanical holding brake.",900)
     for x,label,title,color,lines in [
-        (40,"NORMAL STOP","Brake + disarm",BLUE,["Release drive enable.","Or PARK / controller L1.","Rider left: controller brake.","Return neutral; ARM again."]),
-        (430,"SOFTWARE E-STOP","Latched Brake",RED,["Rider right / controller B.","Also detected system faults.","Release does not reset.","Repair; restart all programs."]),
+        (40,"NORMAL STOP","Coast",BLUE,["Release drive enable.","Or center the controller sticks.","L1 / rider left: Coast while held.","Resume after release and neutral."]),
+        (430,"B BUTTON BRAKE","Momentary Brake",RED,["Rider right / controller B.","No fault latch or reboot.","Release; stop and return neutral.","Resume after 500 ms neutral."]),
         (820,"INDEPENDENT STOP","Remove drive power",AMBER,["Requires reviewed hardware.","Must cover every power path.","Braking changes unpowered.","Prove stopping and holding."])]:
         d.card(x,180,340,245,label,title,lines,color)
-    d.text(40,480,"Automatic software trips",25,bold=True)
-    d.card(40,510,535,155,"MASTER","Stop both sides",["Rider / radio / steering / input faults.","Lost health replies or stalled control loop."],RED)
-    d.card(625,510,535,155,"EACH CHILD","Stop its own motors",["Command lease / invalid packet / local faults.","Heat, speed, battery and duty supervision."],RED)
+    d.text(40,480,"Fatal health faults request E-STOP and latch",25,bold=True)
+    d.card(40,510,535,155,"MASTER","Stop both sides",["Radio, steering and input faults.","Lost health replies or stalled control loop."],RED)
+    d.card(625,510,535,155,"EACH CHILD","Stop its own motors",["Missing motor / invalid packet / lease fault.","Heat derates; duty gives rest advice."],RED)
     d.note(710,"OCCUPIED OPERATION HAS NOT BEEN VALIDATED",["Commands: 40 ms; lease: 150 ms. Health: 100 ms requests + 500 ms reply deadline.","Detection and braking take time. Measure delay and loaded stopping distance on the final chair.","An open rider-button wire or failed drive CPU can defeat software protection."])
     d.save("stop-paths.svg")
 

@@ -19,7 +19,7 @@ use std::{
 use thiserror::Error;
 use vexide::smart::{SmartDevice, SmartDeviceType, SmartPort, serial::SerialPort};
 
-pub const PROTOCOL_VERSION: u16 = 5;
+pub const PROTOCOL_VERSION: u16 = 6;
 pub const LINK_BAUD: u32 = 115_200;
 pub const HEALTH_INTERVAL: Duration = Duration::from_millis(100);
 /// Retry a lost/corrupt health response before the child's 150 ms command lease can expire.
@@ -84,7 +84,7 @@ pub enum Request<R> {
         sequence: u32,
         request: R,
     },
-    EmergencyStop(StopReason),
+    FaultStop(StopReason),
 }
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, MaxSize)]
 pub enum Response<R> {
@@ -120,8 +120,8 @@ pub enum LinkError {
     Backlog,
     #[error("node handshake is incomplete")]
     NotConnected,
-    #[error("E-STOP is latched until all programs restart")]
-    EmergencyStopped,
+    #[error("system fault is latched until all programs restart")]
+    FaultStopped,
 }
 #[derive(Debug, Serialize, Deserialize, MaxSize)]
 struct CheckedPacket<T> {
@@ -164,7 +164,7 @@ impl CommandLease {
         // A locally faulted child with no command lease must still identify itself and report
         // health. Assignment never clears the fault, and accept() below will reject commands.
         if self.sequence.is_some() && self.stopped.is_some() {
-            return Err(LinkError::EmergencyStopped);
+            return Err(LinkError::FaultStopped);
         }
         if assignment.version != PROTOCOL_VERSION
             || self.assignment.is_some_and(|old| old != assignment)
@@ -193,7 +193,7 @@ impl CommandLease {
         now: Instant,
     ) -> Result<(), LinkError> {
         if self.expired(now) {
-            return Err(LinkError::EmergencyStopped);
+            return Err(LinkError::FaultStopped);
         }
         if self.assignment.is_none_or(|a| a.session != session)
             || self
@@ -463,7 +463,10 @@ mod tests {
         let p = WirePacket::<DrivetrainRequest, DrivetrainResponse>::Request(Request::Node {
             session: u64::MAX,
             sequence: u32::MAX,
-            request: DrivetrainRequest::SetVoltage { millivolts: 4000 },
+            request: DrivetrainRequest::SetVoltage {
+                millivolts: 4000,
+                brake: false,
+            },
         });
         let mut frame = [0; MAX_FRAME_LEN];
         let len = encode_frame(&p, &mut frame).unwrap().len();

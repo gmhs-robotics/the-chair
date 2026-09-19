@@ -14,7 +14,7 @@ This is the finalized **three VEX V5 Brain** configuration. The photographs esta
 | Master P18 | V5 radio | Optional controller connection |
 | Master P17 | Rotation Sensor | WHEEL forward speed request, 0–270° |
 | Master ADI A | Left wheel bumper | WHEEL hold-to-run; CONTROLLER rider brake |
-| Master ADI B | Right wheel bumper | Latched rider E-stop in both modes |
+| Master ADI B | Right wheel bumper | Electrical Brake while held in both modes; no latch |
 | Master ADI C | Unused | Leave empty; broken potentiometer removed |
 | LEFT P4, P5 | Two bottom LEFT drive motors | LEFT base polarity |
 | LEFT P6, P7 | Two top LEFT drive motors | Opposite polarity from LEFT bottom pair |
@@ -35,7 +35,7 @@ This is the finalized **three VEX V5 Brain** configuration. The photographs esta
 
 The child packages call the same shared `run_node`. Slot names aid uploading; they do not assign the side. The master assigns side and session from its cable port. That assignment cannot change during the live session.
 
-Children have no local throttle, mode selector or rider controls. They retain the state needed for local safety: command sequence, deadline, fault latch and duty budget.
+Children have no local throttle, mode selector or rider controls. They retain the state needed for local safety: command sequence, deadline and fault latch. They reduce voltage automatically when motors run hot.
 
 ## Parameters still requiring measurement
 

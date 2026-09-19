@@ -67,16 +67,17 @@ impl Node<DrivetrainNode, MasterNode> {
                     sequence,
                     request,
                 } => {
-                    let DrivetrainRequest::SetVoltage { millivolts } = request;
+                    let DrivetrainRequest::SetVoltage { millivolts, brake } = request;
                     if !(-((MAX_DRIVE_VOLTS * 1000.0) as i16)..=(MAX_DRIVE_VOLTS * 1000.0) as i16)
                         .contains(&millivolts)
+                        || (brake && millivolts != 0)
                     {
                         return Err(LinkError::Protocol);
                     }
                     self.lease.accept(session, sequence, millivolts == 0, now)?;
                     report.request = Some(request);
                 }
-                Request::EmergencyStop(reason) => {
+                Request::FaultStop(reason) => {
                     self.lease.stop(reason);
                     report.request = None;
                 }

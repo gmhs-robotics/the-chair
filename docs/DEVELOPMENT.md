@@ -52,7 +52,7 @@ Products are in `target/thumbv7a-vex-v5-chair/release/`:
 - `chair-left` and `chair-left.bin`
 - `chair-right` and `chair-right.bin`
 
-Host tests use vexide's incomplete mocked SDK and deterministic pure control/protocol tests. They cover neutral/rearm interlocks, both E-stop paths, signed WHEEL throttle, signed CONTROLLER arcade input and pivoting, direction-change stopping, passenger stopping, controller loss, voltage limits, steering feedback, command ordering, corrupt frames, timeout latching, thermal thresholds and cumulative duty. They do not simulate real motor torque, radio latency, connector faults or stopping distance. Firmware linking catches target/ABI/SDK problems that a host-only check cannot catch.
+Host tests use vexide's incomplete mocked SDK and deterministic pure control/protocol tests. They cover startup and post-brake neutral interlocks, both B brake paths, signed WHEEL throttle, signed CONTROLLER arcade input and pivoting, direction-change stopping, passenger stopping, controller loss, voltage limits, steering feedback, command ordering, corrupt frames, timeout latching, thermal derating and advisory drive time. They do not simulate real motor torque, radio latency, connector faults or stopping distance. Firmware linking catches target/ABI/SDK problems that a host-only check cannot catch.
 
 ## Upload
 
@@ -66,7 +66,7 @@ This builds every requested program first, prompts for one USB Brain at a time, 
 
 The book is organized by task: `OUTLINE.md` is the entry point, `WIRING.md` owns the cable schedule, `OPERATING.md` owns the operator sequence, `HUD.md` explains display fixtures, and `SAFETY.md` owns software limits and protocol behavior. Keep physical test evidence in `COMMISSIONING.md` or a dated copy of its record.
 
-The UI previews call the same `draw` function used on the Brain. Six fixtures cover startup, parked, WHEEL driving, CONTROLLER driving, motor overtemperature and stale link telemetry. Values are synthetic; host fonts and strokes approximate VEX rendering. Preview generation changes no runtime display behavior.
+The UI previews call the same `draw` function used on the Brain. Six fixtures cover startup, waiting for readiness, WHEEL driving, CONTROLLER driving, motor overtemperature and stale link telemetry. Values are synthetic; host fonts and strokes approximate VEX rendering. Preview generation changes no runtime display behavior.
 
 During hardware link diagnosis, the Master node cards show transmitted, received and malformed-frame byte counts. Tapping a node card restarts that handshake. The Master UI task samples touch at the physical Display refresh interval and keeps each action pending until the control loop drains it. Each drivetrain Brain's UI task renders its P21 link state and the same counters at 250 ms cadence. Displays are diagnostic and grant no motion authority.
 

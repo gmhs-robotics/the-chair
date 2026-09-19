@@ -171,13 +171,13 @@ impl<Remote: ChildNode> Node<MasterNode, Remote> {
         }
         Ok(report)
     }
-    pub fn emergency_stop(&mut self, reason: StopReason) -> Result<(), LinkError> {
+    pub fn fault_stop(&mut self, reason: StopReason) -> Result<(), LinkError> {
         self.lease.stop(reason);
-        self.send_request(Request::<Remote::Request>::EmergencyStop(reason))
+        self.send_request(Request::<Remote::Request>::FaultStop(reason))
     }
     pub(crate) fn request_node(&mut self, request: Remote::Request) -> Result<(), LinkError> {
         if self.lease.stopped.is_some() {
-            return Err(LinkError::EmergencyStopped);
+            return Err(LinkError::FaultStopped);
         }
         if !self.is_connected() {
             return Err(LinkError::NotConnected);
