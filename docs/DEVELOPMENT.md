@@ -24,6 +24,13 @@ guidance: nightly-2026-03-07.
 
 ## Build products
 
+GitHub Actions runs formatting, host tests, Clippy, shell syntax checks, and
+all three V5 firmware builds. CI installs `cargo-v5` at the revision in
+`flake.lock`, with its Linux build dependencies. Successful runs provide the
+ELF and BIN files in the `chair-v5-firmware` artifact, retained for 14 days.
+A separate documentation job builds this book and checks links, SVGs, and
+fault-label coverage. Cargo builds and mdBook are cached between runs.
+
 ```sh
 cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -64,15 +71,11 @@ the cable schedule, `OPERATING.md` owns the operator sequence, `HUD.md` explains
 display fixtures, and `SAFETY.md` owns software limits and protocol behavior.
 Keep physical test evidence in `COMMISSIONING.md` or a dated copy of its record.
 
-# <<<<<<< HEAD The UI previews call the same `draw` function used on the Brain. Six fixtures cover startup, waiting for readiness, WHEEL driving, CONTROLLER driving, motor overtemperature and stale link telemetry. Values are synthetic; host fonts and strokes approximate VEX rendering. Preview generation changes no runtime display behavior.
-
 The UI previews call the same `draw` function used on the Brain. Six fixtures
 cover startup, parked, WHEEL driving, CONTROLLER driving, motor overtemperature
 and stale link telemetry. Values are synthetic; host fonts and strokes
 approximate VEX rendering. Preview generation changes no runtime display
 behavior.
-
->>>>>>> 36039433a5bc3d792bb2c31059e119da9371d107
 
 During hardware link diagnosis, the Master node cards show transmitted, received
 and malformed-frame byte counts. Tapping a node card restarts that handshake.
@@ -81,7 +84,7 @@ keeps each action pending until the control loop drains it. Each drivetrain
 Brain's UI task renders its P21 link state and the same counters at 250 ms
 cadence. Displays are diagnostic and grant no motion authority.
 
-Seven schematic SVGs cover topology, master ports, driving sequence, child
+Six schematic SVGs cover master ports, driving sequence, child
 lifecycle, stop paths, control signals and link timing. `tools/diagrams.py` owns
 their source. The diagrams identify software responsibilities and cable
 endpoints, not measured geometry or approval of the shared battery supply.
@@ -95,13 +98,13 @@ mdbook build docs
 python3 tools/check-docs.py
 git diff --check
 mkdir -p target/docs-previews
-for figure in system-topology controller-brain-ports driving-flow drive-nodes stop-paths control-signals link-timing; do
+for figure in controller-brain-ports driving-flow drive-nodes stop-paths control-signals link-timing; do
   resvg --use-fonts-dir "$(dirname "$CHAIR_HUD_FONT")" \
     "docs/diagrams/$figure.svg" "target/docs-previews/$figure.png"
 done
 ```
 
-Inspect all seven schematic PNGs in `target/docs-previews/` and six UI PNGs in
+Inspect all six schematic PNGs in `target/docs-previews/` and six UI PNGs in
 `target/hud-previews/` for clipped text, crossings and ambiguous endpoints.
 Check the physical Brain for final font fit. Every SVG includes an accessible
 title and description. Edit the generator or fixture, not generated SVG paths.
@@ -120,7 +123,7 @@ not fetch external URLs or validate physical behavior.
 
 | Figure                             | Implementation to check when updating                                          |
 | ---------------------------------- | ------------------------------------------------------------------------------ |
-| System topology / master ports     | `controller/src/main.rs`, `shared/src/lib.rs`, `shared/src/link/drivetrain.rs` |
+| Master ports                       | `controller/src/main.rs`, `shared/src/lib.rs`, `shared/src/link/drivetrain.rs` |
 | Driving sequence / control signals | `controller/src/control.rs`, `throttle.rs`, `steering.rs`, `main.rs`           |
 | Child lifecycle / link timing      | `shared/src/link.rs`, `link/master.rs`, `link/child.rs`, `link/drivetrain.rs`  |
 | Stop paths                         | `shared/src/safety.rs`, `shared/src/lib.rs`, `controller/src/main.rs`          |

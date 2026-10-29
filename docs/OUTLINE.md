@@ -2,9 +2,12 @@
 
 Three VEX V5 Brains coordinate a differential-drive chair demonstrator. WHEEL mode uses signed P17 forward/reverse. CONTROLLER uses signed arcade sticks with in-place turning. The steering-wheel master reads rider controls or a V5 controller; the two identical drive runtimes supervise four motors each.
 
-**Status:** firmware builds and host checks are available. Occupied operation and the shared battery arrangement have not been validated.
+**Status:** the chair has been driven with a rider. Formal commissioning, loaded stopping-distance measurements, and validation of the shared battery arrangement remain open.
 
-![System overview](diagrams/system-topology.svg)
+I split the chair across three Brains. The master in slot 1 reads my controls,
+runs the dashboard, and sends drive commands through P19 to LEFT and P20 to
+RIGHT. LEFT runs in slot 2 and RIGHT in slot 3. Each receives commands on P21,
+drives four motors on P4–P7, and sends motor and battery health back to the master.
 
 ## Choose your task
 

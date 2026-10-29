@@ -39,16 +39,6 @@ class Diagram:
             self.text(850,self.height-22,"V5 / THREE-BRAIN CONFIGURATION",12,"#536879")
         (OUT/name).write_text("\n".join(self.parts)+"\n</svg>\n")
 
-def topology():
-    d=Diagram("01","Three-Brain control layout","The master calculates commands; each drivetrain Brain controls and monitors four motors.",680,plain=True)
-    d.card(350,40,500,195,"MASTER / SLOT 1","Reads controls and commands both sides",["P17 throttle • P21 steering • optional radio","Runs HUD, readiness, drive mixing and system safety","P19 sends LEFT • P20 sends RIGHT"])
-    d.line("475,235 475,300 295,300 295,350",arrow=True)
-    d.line("725,235 725,300 905,300 905,350",arrow=True)
-    d.text(401,275,"COMMANDS DOWN • HEALTH BACK",17,BLUE,True)
-    d.card(40,350,510,230,"LEFT / SLOT 2","Controls four LEFT motors",["P21 receives target and returns telemetry","P4–P7 drive the LEFT side","Checks command lease, motors and battery"],GREEN)
-    d.card(650,350,510,230,"RIGHT / SLOT 3","Controls four RIGHT motors",["P21 receives target and returns telemetry","P4–P7 drive the RIGHT side","Checks command lease, motors and battery"],GREEN)
-    d.save("system-topology.svg")
-
 def ports():
     d=Diagram("02","Steering-wheel connections","ADI letters belong to the master. Smart Port 21 has a different job on each Brain.",1040)
     d.card(410,300,380,225,"MASTER","V5 Brain",["P19 = LEFT data link","P20 = RIGHT data link","P21 = steering motor","P18 = controller radio"])
@@ -157,4 +147,4 @@ def stopping():
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True,exist_ok=True)
-    for draw in (topology,ports,operation,node,stopping,signals,timing): draw()
+    for draw in (ports,operation,node,stopping,signals,timing): draw()

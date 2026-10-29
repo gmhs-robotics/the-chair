@@ -1,4 +1,4 @@
-name: Rust
+name: CI
 
 on:
   push:
@@ -7,9 +7,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: Rust and V5 firmware
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
@@ -17,6 +26,26 @@ jobs:
           # Keep aligned with rust-toolchain.toml.
           toolchain: nightly-2026-03-07
           components: rust-src,rustfmt,clippy
+      - name: Cache Cargo builds
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/cargo-v5
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock', 'flake.lock') }}
+      - name: Install cargo-v5 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends pkg-config libudev-dev libssl-dev
+      - name: Install pinned cargo-v5
+        run: |
+          revision=$(python3 -c 'import json; print(json.load(open("flake.lock"))["nodes"]["cargo-v5"]["locked"]["rev"])')
+          if ! command -v cargo-v5 >/dev/null 2>&1; then
+            cargo install --locked --git https://github.com/gmhs-robotics/cargo-v5 --rev "$revision" cargo-v5
+          fi
+          cargo v5 --version
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Run host tests
@@ -27,3 +56,41 @@ jobs:
         run: ./build.sh
       - name: Check shell syntax
         run: bash -n build.sh check.sh render-hud.sh upload.sh
+      - name: Upload V5 firmware
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chair-v5-firmware
+          path: |
+            target/armv7a-vex-v5/release/chair-controller
+            target/armv7a-vex-v5/release/chair-controller.bin
+            target/armv7a-vex-v5/release/chair-left
+            target/armv7a-vex-v5/release/chair-left.bin
+            target/armv7a-vex-v5/release/chair-right
+            target/armv7a-vex-v5/release/chair-right.bin
+          if-no-files-found: error
+          retention-days: 14
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
+        with:
+          # Keep aligned with rust-toolchain.toml.
+          toolchain: nightly-2026-03-07
+      - name: Cache mdBook
+        id: mdbook
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cargo/bin/mdbook
+          key: ${{ runner.os }}-mdbook-0.5.4
+      - name: Install mdBook
+        if: steps.mdbook.outputs.cache-hit != 'true'
+        run: cargo install mdbook --version 0.5.4 --locked
+      - name: Build and check documentation
+        run: |
+          mdbook build docs
+          python3 tools/check-docs.py
+          git diff --check

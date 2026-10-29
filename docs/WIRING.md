@@ -2,7 +2,10 @@
 
 This is the finalized **three VEX V5 Brain** configuration. The photographs establish the arrangement of the chair and steering assembly; they do not establish gear ratio, motor polarity, safe steering travel or battery compatibility.
 
-![Three-Brain data topology](diagrams/system-topology.svg)
+I wired the master to both drive Brains: P19 connects to LEFT P21, and P20
+connects to RIGHT P21. The master reads my controls and sends each side its
+drive command. Each drive Brain controls four motors on P4–P7, checks motor
+and battery health, and sends telemetry back over the same link.
 
 ## Cable schedule
 
